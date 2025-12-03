@@ -4,8 +4,8 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/editor/doc123',
-    pathMatch: 'full'
+    loadComponent: () => import('./features/homepage/homepage.component')
+      .then(m => m.HomepageComponent)
   },
   {
     path: 'editor',
@@ -19,6 +19,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '/editor/doc123'
+    redirectTo: '/'
   }
 ];

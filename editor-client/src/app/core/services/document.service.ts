@@ -30,30 +30,30 @@ export interface MissingOperationsResponse {
 })
 export class DocumentService {
   private apiUrl = environment.apiUrl;
-  
-  constructor(private http: HttpClient) {}
-  
+
+  constructor(private http: HttpClient) { }
+
   /**
    * Initialize a new document
    */
   initializeDocument(docId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/api/documents/${docId}/initialize`, {});
   }
-  
+
   /**
    * Get document state (snapshot + version vector)
    */
   getDocumentState(docId: string): Observable<DocumentStateResponse> {
     return this.http.get<DocumentStateResponse>(`${this.apiUrl}/api/documents/${docId}/state`);
   }
-  
+
   /**
    * Get version vector
    */
   getVersionVector(docId: string): Observable<VersionVector> {
     return this.http.get<VersionVector>(`${this.apiUrl}/api/documents/${docId}/version`);
   }
-  
+
   /**
    * Get document content
    */
@@ -62,7 +62,7 @@ export class DocumentService {
       `${this.apiUrl}/api/documents/${docId}/content`
     );
   }
-  
+
   /**
    * Get missing operations
    */
@@ -70,6 +70,25 @@ export class DocumentService {
     return this.http.post<MissingOperationsResponse>(
       `${this.apiUrl}/api/documents/missing-operations`,
       request
+    );
+  }
+
+  /**
+   * Create a new document
+   */
+  createDocument(): Observable<{ id: string; title: string; createdAt: number; status: string }> {
+    return this.http.post<{ id: string; title: string; createdAt: number; status: string }>(
+      `${this.apiUrl}/api/documents/create`,
+      {}
+    );
+  }
+
+  /**
+   * Check if a document exists
+   */
+  checkDocumentExists(docId: string): Observable<{ exists: boolean; id: string; title?: string; createdAt?: number }> {
+    return this.http.get<{ exists: boolean; id: string; title?: string; createdAt?: number }>(
+      `${this.apiUrl}/api/documents/${docId}/exists`
     );
   }
 }
