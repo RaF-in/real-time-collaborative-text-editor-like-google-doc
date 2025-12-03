@@ -1,12 +1,19 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
-
+// src/app/app.config.ts
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes)
+    provideRouter(
+      routes,
+      withComponentInputBinding(), // Bind route params to component inputs
+      withInMemoryScrolling({      // Scroll to top on navigation
+        scrollPositionRestoration: 'top'
+      })
+    ),
+    provideHttpClient()
   ]
 };
