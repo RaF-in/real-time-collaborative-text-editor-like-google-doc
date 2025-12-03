@@ -1,4 +1,4 @@
-package com.mmtext.editorserver;
+package com.mmtext.editorservermain;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

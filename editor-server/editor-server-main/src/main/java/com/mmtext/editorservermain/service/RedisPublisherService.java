@@ -1,7 +1,7 @@
-package com.mmtext.editorserver.service;
+package com.mmtext.editorservermain.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mmtext.editorserver.model.CRDTOperation;
+import com.mmtext.editorservermain.model.CRDTOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;

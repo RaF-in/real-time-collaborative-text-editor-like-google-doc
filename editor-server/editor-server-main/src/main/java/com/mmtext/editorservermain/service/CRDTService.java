@@ -1,7 +1,7 @@
-package com.mmtext.editorserver.service;
+package com.mmtext.editorservermain.service;
 
-import com.mmtext.editorserver.model.CRDTOperation;
-import com.mmtext.editorserver.repository.CRDTOperationRepository;
+import com.mmtext.editorservermain.model.CRDTOperation;
+import com.mmtext.editorservermain.repository.CRDTOperationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

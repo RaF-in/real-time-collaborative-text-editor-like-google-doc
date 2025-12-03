@@ -1,23 +1,8 @@
 
-server:
-  port: 8080
 
 spring:
   application:
     name: editor-server
-
-  datasource:
-    # Primary database for operations
-    url: jdbc:postgresql://postgres-primary:5432/editor_db
-    username: editor_user
-    password: editor_pass
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
 
   jpa:
     hibernate:
@@ -31,18 +16,6 @@ spring:
           batch_size: 50
         order_inserts: true
         order_updates: true
-
-  kafka:
-    bootstrap-servers: kafka:9092
-    consumer:
-      group-id: editor-cdc-consumer
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      enable-auto-commit: true
-      auto-commit-interval: 1000
-    listener:
-      ack-mode: batch
   data:
     redis:
       host: redis

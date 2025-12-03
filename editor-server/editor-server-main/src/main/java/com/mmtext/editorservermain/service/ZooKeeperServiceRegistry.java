@@ -1,4 +1,4 @@
-package com.mmtext.editorserver.service;
+package com.mmtext.editorservermain.service;
 
 
 import org.apache.curator.framework.CuratorFramework;

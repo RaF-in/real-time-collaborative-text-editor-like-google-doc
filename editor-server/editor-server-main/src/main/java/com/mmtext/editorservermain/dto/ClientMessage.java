@@ -1,7 +1,7 @@
-package com.mmtext.editorserver.dto;
+package com.mmtext.editorservermain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.mmtext.editorserver.model.CRDTOperation;
+import com.mmtext.editorservermain.model.CRDTOperation;
 
 import java.util.Map;
 

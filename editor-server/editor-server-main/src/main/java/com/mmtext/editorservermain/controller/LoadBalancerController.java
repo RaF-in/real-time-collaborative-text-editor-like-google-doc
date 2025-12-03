@@ -1,7 +1,7 @@
-package com.mmtext.editorserver.controller;
+package com.mmtext.editorservermain.controller;
 
-import com.mmtext.editorserver.service.ZooKeeperConsistentHashingService;
-import com.mmtext.editorserver.service.ZooKeeperServiceRegistry;
+import com.mmtext.editorservermain.service.ZooKeeperConsistentHashingService;
+import com.mmtext.editorservermain.service.ZooKeeperServiceRegistry;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,4 +1,4 @@
-package com.mmtext.editorserver.model;
+package com.mmtext.editorservermain.model;
 
 
 import jakarta.persistence.*;

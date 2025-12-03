@@ -1,7 +1,7 @@
-package com.mmtext.editorserver.config;
+package com.mmtext.editorservermain.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mmtext.editorserver.service.RedisSubscriberService;
+import com.mmtext.editorservermain.service.RedisSubscriberService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;

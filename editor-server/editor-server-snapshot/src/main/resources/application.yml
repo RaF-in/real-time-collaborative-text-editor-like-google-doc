@@ -1,3 +1,23 @@
 spring:
   application:
     name: editor-server-snapshot
+  kafka:
+    consumer:
+      group-id: editor-server-main-consumer-group
+      auto-offset-reset: earliest         # or latest depending on use case
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+      # Tuning consumer for high throughput
+      fetch-min-size: 1                    # minimum fetch
+      fetch-max-wait: 500                  # wait up to 500ms to send fetch request
+      max-poll-records: 500  # maximum number of records per poll
+      properties:
+        session-timeout-ms: 15000
+        heartbeat-interval-ms: 5000
+    listener:
+      concurrency: 5
+      type: batch
+  jpa:
+    hibernate:
+      ddl-auto: validate

@@ -1,6 +1,6 @@
-package com.mmtext.editorserver.repository;// src/main/java/com/editor/repository/CRDTOperationRepository.java
+package com.mmtext.editorservermain.repository;// src/main/java/com/editor/repository/CRDTOperationRepository.java
 
-import com.mmtext.editorserver.model.CRDTOperation;
+import com.mmtext.editorservermain.model.CRDTOperation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

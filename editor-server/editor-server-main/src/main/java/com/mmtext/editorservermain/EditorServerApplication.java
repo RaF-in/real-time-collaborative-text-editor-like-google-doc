@@ -1,4 +1,4 @@
-package com.mmtext.editorserver;
+package com.mmtext.editorservermain;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

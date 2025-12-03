@@ -1,8 +1,8 @@
-package com.mmtext.editorserver.service;
+package com.mmtext.editorservermain.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mmtext.editorserver.dto.ClientMessage;
-import com.mmtext.editorserver.model.CRDTOperation;
+import com.mmtext.editorservermain.dto.ClientMessage;
+import com.mmtext.editorservermain.model.CRDTOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
