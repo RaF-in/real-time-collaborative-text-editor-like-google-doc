@@ -2,6 +2,7 @@ package com.mmtext.editorservermain.controller;
 
 import com.mmtext.editorservermain.service.ZooKeeperConsistentHashingService;
 import com.mmtext.editorservermain.service.ZooKeeperServiceRegistry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.*;
  * - Dynamic server discovery from ZooKeeper
  * - Consistent hashing for server selection
  * - Real-time server health monitoring
+ * - Preferred server routing through client nginx
  */
 @RestController
 @RequestMapping("/api/loadbalancer")
@@ -22,6 +24,9 @@ public class LoadBalancerController {
 
     private final ZooKeeperConsistentHashingService consistentHashing;
     private final ZooKeeperServiceRegistry serviceRegistry;
+
+    @Value("${app.client.base-url:localhost:4200}")
+    private String clientBaseUrl;
 
     public LoadBalancerController(ZooKeeperConsistentHashingService consistentHashing,
                                   ZooKeeperServiceRegistry serviceRegistry) {
@@ -45,15 +50,22 @@ public class LoadBalancerController {
             ));
         }
 
-        String wsUrl = consistentHashing.getServerWebSocketUrl(key);
+        // Build WebSocket URL pointing to client nginx with preferred server
+        String wsUrl = String.format("ws://%s/ws/editor?doc=%s&preferred=%s",
+                                    clientBaseUrl, key, server);
+
+        // Also provide direct API URLs if needed
+        String apiUrl = String.format("http://%s/api", clientBaseUrl);
         String serverInfo = serviceRegistry.getServerInfo(server);
 
         return ResponseEntity.ok(Map.of(
-                "key", key,
+                "documentId", key,
                 "serverId", server,
                 "serverAddress", serverInfo != null ? serverInfo : "unknown",
-                "wsUrl", wsUrl != null ? wsUrl : "unavailable",
-                "source", "zookeeper"
+                "wsUrl", wsUrl,
+                "apiUrl", apiUrl,
+                "source", "zookeeper-with-preferred-routing",
+                "routing", "client-nginx"
         ));
     }
 
@@ -80,7 +92,8 @@ public class LoadBalancerController {
                 "servers", serverDetails,
                 "count", servers.size(),
                 "source", "zookeeper",
-                "hashRingSize", consistentHashing.getHashRingSize()
+                "hashRingSize", consistentHashing.getHashRingSize(),
+                "websocketRouting", "client-nginx-with-preference"
         ));
     }
 
@@ -114,7 +127,8 @@ public class LoadBalancerController {
                 "distribution", stats,
                 "averagePerServer", avgPerServer,
                 "standardDeviation", stdDev,
-                "source", "zookeeper"
+                "source", "zookeeper",
+                "routingMode", "preferred-server-via-client-nginx"
         ));
     }
 
@@ -130,7 +144,8 @@ public class LoadBalancerController {
                 "status", healthy ? "UP" : "DOWN",
                 "liveServers", serverCount,
                 "hashRingNodes", consistentHashing.getHashRingSize(),
-                "zookeeper", "connected"
+                "zookeeper", "connected",
+                "routingMode", "preferred-server-via-client-nginx"
         ));
     }
 }

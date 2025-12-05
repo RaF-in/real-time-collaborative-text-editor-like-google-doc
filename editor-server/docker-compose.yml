@@ -283,6 +283,8 @@ services:
       SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       ZOOKEEPER_CONNECT: zookeeper:2181
       DEBEZIUM_TOPIC_NAME: postgres-primary.editor_db.crdt_operations
+      NGINX_CLIENT_BASE_URL: localhost:4200
+      ENVIRONMENT: development
     networks:
       - editor-network
     healthcheck:
@@ -323,6 +325,8 @@ services:
       SPRING_REDIS_PASSWORD: redis_pass
       SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       DEBEZIUM_TOPIC_NAME: postgres-primary.editor_db.crdt_operations
+      NGINX_CLIENT_BASE_URL: localhost:4200
+      ENVIRONMENT: development
     networks:
       - editor-network
     healthcheck:
@@ -363,6 +367,8 @@ services:
       SPRING_REDIS_PASSWORD: redis_pass
       SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       DEBEZIUM_TOPIC_NAME: postgres-primary.editor_db.crdt_operations
+      NGINX_CLIENT_BASE_URL: localhost:4200
+      ENVIRONMENT: development
     networks:
       - editor-network
     healthcheck:
@@ -421,10 +427,16 @@ services:
     container_name: editor-client
     depends_on:
       - nginx
+      - editor-server-1
+      - editor-server-2
+      - editor-server-3
     ports:
       - "4200:80"   # Access Angular app in browser
     networks:
       - editor-network
+    environment:
+      # Add environment variable for base URL
+      - NGINX_CLIENT_BASE_URL=localhost:4200
 
 networks:
   editor-network:

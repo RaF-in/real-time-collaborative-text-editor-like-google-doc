@@ -13,6 +13,10 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,15 +61,43 @@ public class EditorWebSocketHandler extends TextWebSocketHandler {
                 ? session.getRemoteAddress().toString()
                 : "unknown";
 
+        // Extract query parameters from URI
+        Map<String, String> queryParams = parseQueryParams(session.getUri().getQuery());
+        String documentId = queryParams.get("doc");
+        String preferredServer = queryParams.get("preferred");
+
+        // Log routing information
         logger.info("WebSocket connection established - Session: {}, Remote: {}, Server: {}",
                 sessionId, remoteAddress, serverId);
 
-        sendMessage(session, Map.of(
-                "type", "CONNECTED",
-                "serverId", serverId,
-                "sessionId", sessionId,
-                "message", "Connected to " + serverId
-        ));
+        if (preferredServer != null) {
+            if (serverId.equals(preferredServer)) {
+                logger.info("✅ Client successfully connected to preferred server: {} for document: {}",
+                          serverId, documentId);
+            } else {
+                logger.warn("⚠️ Client preferred server {} but connected to {} (fallback) for document: {}",
+                          preferredServer, serverId, documentId);
+            }
+        }
+
+        // Send connection info with routing details
+        Map<String, Object> connectionInfo = new HashMap<>();
+        connectionInfo.put("type", "CONNECTION_INFO");
+        connectionInfo.put("serverId", serverId);
+        connectionInfo.put("sessionId", sessionId);
+        connectionInfo.put("documentId", documentId);
+        connectionInfo.put("preferredServer", preferredServer);
+        connectionInfo.put("timestamp", System.currentTimeMillis());
+
+        if (preferredServer != null && serverId.equals(preferredServer)) {
+            connectionInfo.put("routing", "preferred-success");
+        } else if (preferredServer != null) {
+            connectionInfo.put("routing", "preferred-fallback");
+        } else {
+            connectionInfo.put("routing", "no-preference");
+        }
+
+        sendMessage(session, connectionInfo);
     }
 
     @Override
@@ -424,6 +456,24 @@ public class EditorWebSocketHandler extends TextWebSocketHandler {
 
     public java.util.Set<String> getActiveDocuments() {
         return documentSessions.keySet();
+    }
+
+    private Map<String, String> parseQueryParams(String query) {
+        Map<String, String> params = new HashMap<>();
+        if (query != null) {
+            String[] pairs = query.split("&");
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=", 2);
+                if (keyValue.length == 2) {
+                    try {
+                        params.put(keyValue[0], URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8));
+                    } catch (Exception e) {
+                        logger.error("Error decoding query parameter: {}", pair, e);
+                    }
+                }
+            }
+        }
+        return params;
     }
 
     private static class SessionMetadata {

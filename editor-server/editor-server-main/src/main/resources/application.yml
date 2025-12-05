@@ -49,11 +49,29 @@ debezium:
   consumer:
 
 
+# Application configuration for WebSocket routing
+app:
+  client:
+    base-url: ${NGINX_CLIENT_BASE_URL:localhost:4200}  # Default for development
+  environment: ${ENVIRONMENT:development}
+
 # ZooKeeper configuration
 zookeeper:
   connection-string: ${ZOOKEEPER_CONNECT:zookeeper:2181}
   session-timeout: 30000
   connection-timeout: 15000
+
+---
+# Profile for Kubernetes (when ready)
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+
+app:
+  client:
+    base-url: editor.yourdomain.com
+  environment: kubernetes
 
 logging:
   level:
