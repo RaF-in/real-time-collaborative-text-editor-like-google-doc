@@ -1,0 +1,10 @@
+
+GET http://localhost:8081/api/loadbalancer/server?key=testuser
+
+###
+# curl http://localhost:8081/health
+#GET http://localhost:8081/health
+
+###
+
+###

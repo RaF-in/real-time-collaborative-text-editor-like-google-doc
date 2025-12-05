@@ -1,0 +1,99 @@
+<div class="editor-container">
+  <!-- Header -->
+  <div class="editor-header">
+    <div class="header-left">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <input 
+          type="text" 
+          class="doc-title" 
+          [value]="editorState.docId() || 'Untitled Document'"
+          placeholder="Untitled document"
+        />
+        <div class="doc-metadata">
+          <span class="status-badge" [class.connected]="editorState.isConnected()">
+            {{ editorState.isConnected() ? '● Connected' : '○ Disconnected' }}
+          </span>
+          @if (editorState.currentServerId(); as serverId) {
+            <span class="server-info">
+              Server: {{ serverId }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <app-collaborators-panel [collaborators]="editorState.collaborators()" />
+      <button class="btn-share">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 8C19.6569 8 21 6.65685 21 5C21 3.34315 19.6569 2 18 2C16.3431 2 15 3.34315 15 5C15 6.65685 16.3431 8 18 8Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M6 15C7.65685 15 9 13.6569 9 12C9 10.3431 7.65685 9 6 9C4.34315 9 3 10.3431 3 12C3 13.6569 4.34315 15 6 15Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M18 22C19.6569 22 21 20.6569 21 19C21 17.3431 19.6569 16 18 16C16.3431 16 15 17.3431 15 19C15 20.6569 16.3431 22 18 22Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Share
+      </button>
+    </div>
+  </div>
+  
+  <!-- Toolbar -->
+  <app-editor-toolbar />
+  
+  <!-- Main Content Area -->
+  <div class="editor-main">
+    <!-- Loading State -->
+    @if (editorState.isLoading()) {
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading document...</p>
+      </div>
+    }
+    
+    <!-- Error State -->
+    @if (editorState.error(); as error) {
+      <div class="error-banner">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z" fill="currentColor"/>
+        </svg>
+        {{ error }}
+      </div>
+    }
+    
+    <!-- Editor Content -->
+    <app-editor-content 
+      [content]="editorState.content()"
+      [isConnected]="editorState.isConnected()"
+      (contentChange)="onContentChange($event)"
+    />
+    
+    <!-- Version Vector Display (Debug) -->
+    @if (showDebug() && editorState.versionVectorEntries().length > 0) {
+      <div class="version-vector-display">
+        <div class="vector-title">Version Vector:</div>
+        <div class="vector-badges">
+          @for (entry of editorState.versionVectorEntries(); track entry.server) {
+            <span class="vector-badge">
+              {{ entry.server }}: {{ entry.seq }}
+            </span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+  
+  <!-- Footer -->
+  <div class="editor-footer">
+    <div class="footer-left">
+      <span class="char-count">{{ editorState.characterCount() }} characters</span>
+      <span class="word-count">{{ editorState.wordCount() }} words</span>
+    </div>
+    <div class="footer-right">
+      <button class="btn-icon" (click)="toggleDebug()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12zm-1-9h2v4h-2V7zm0 5h2v2h-2v-2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>

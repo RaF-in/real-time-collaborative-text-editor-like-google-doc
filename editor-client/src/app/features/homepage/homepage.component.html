@@ -1,0 +1,45 @@
+<div class="homepage-container">
+  <div class="homepage-content">
+    <!-- Header Section -->
+    <header class="homepage-header">
+      <div class="logo-section">
+        <div class="logo-icon">📝</div>
+        <h1 class="app-title">Collaborative Editor</h1>
+      </div>
+      <p class="app-subtitle">Create and collaborate on documents in real-time</p>
+    </header>
+
+    <!-- Start New Document Section -->
+    <section class="document-section">
+      <h2 class="section-title">Start a new document</h2>
+      
+      <div class="document-templates">
+        <!-- Blank Document Card -->
+        <div class="template-card blank-doc" (click)="createBlankDocument()">
+          <div class="template-preview">
+            <div class="blank-page">
+              <div class="blank-line"></div>
+              <div class="blank-line"></div>
+              <div class="blank-line"></div>
+              <div class="blank-line short"></div>
+            </div>
+          </div>
+          <div class="template-info">
+            <div class="template-icon">+</div>
+            <span class="template-name">Blank</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Documents Section (Optional - for future enhancement) -->
+    <section class="recent-section">
+      <h2 class="section-title">Recent documents</h2>
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <p class="empty-text">No recent documents</p>
+        <p class="empty-subtext">Documents you create will appear here</p>
+      </div>
+    </section>
+  </div>
+</div>

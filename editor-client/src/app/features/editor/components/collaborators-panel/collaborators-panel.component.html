@@ -1,0 +1,20 @@
+@if (collaborators.length > 0) {
+  <div class="collaborators-panel">
+    <div class="collaborator-avatars">
+      @for (collab of visibleCollaborators; track collab.userId) {
+        <div 
+          class="avatar" 
+          [style.background]="collab.avatarColor"
+          [title]="collab.userName"
+        >
+          {{ getInitials(collab.userName) }}
+        </div>
+      }
+      @if (collaborators.length > 3) {
+        <div class="avatar more">
+          +{{ collaborators.length - 3 }}
+        </div>
+      }
+    </div>
+  </div>
+}

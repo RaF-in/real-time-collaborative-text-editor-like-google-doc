@@ -1,0 +1,14 @@
+<div class="editor-content-wrapper">
+  <div class="editor-paper">
+    <textarea
+      #editorTextarea
+      class="editor-textarea"
+      [ngModel]="content"
+      [disabled]="!isConnected"
+      (ngModelChange)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      placeholder="Start typing..."
+      spellcheck="true"
+    ></textarea>
+  </div>
+</div>

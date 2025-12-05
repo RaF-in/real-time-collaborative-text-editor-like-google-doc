@@ -18,61 +18,8 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="editor-content-wrapper">
-      <div class="editor-paper">
-        <textarea
-          #editorTextarea
-          class="editor-textarea"
-          [ngModel]="content"
-          [disabled]="!isConnected"
-          (ngModelChange)="onInput($event)"
-          (keydown)="onKeyDown($event)"
-          placeholder="Start typing..."
-          spellcheck="true"
-        ></textarea>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .editor-content-wrapper {
-      flex: 1;
-      overflow-y: auto;
-      padding: 48px 96px;
-      background: #f9fbfd;
-    }
-    
-    .editor-paper {
-      max-width: 816px;
-      min-height: 1056px;
-      margin: 0 auto;
-      background: white;
-      box-shadow: 0 0 0 0.75pt #d1d1d1, 0 0 3pt 2pt rgba(0,0,0,0.05);
-      padding: 96px;
-    }
-    
-    .editor-textarea {
-      width: 100%;
-      min-height: 864px;
-      border: none;
-      outline: none;
-      font-family: 'Arial', sans-serif;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #202124;
-      resize: none;
-      background: transparent;
-    }
-    
-    .editor-textarea:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .editor-textarea::placeholder {
-      color: #9aa0a6;
-    }
-  `]
+  templateUrl: './editor-content.component.html',
+  styleUrls: ['./editor-content.component.css']
 })
 export class EditorContentComponent {
   @Input() content = '';
@@ -84,7 +31,6 @@ export class EditorContentComponent {
   private lastContent = signal('');
   
   constructor() {
-    // Update lastContent when content changes
     effect(() => {
       this.lastContent.set(this.content);
     });
@@ -129,4 +75,3 @@ export class EditorContentComponent {
     return null;
   }
 }
-

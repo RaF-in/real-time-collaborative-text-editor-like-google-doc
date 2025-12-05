@@ -1,7 +1,7 @@
 // src/environments/environment.ts
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost',  // Your backend URL
-  wsUrl: 'ws://localhost/ws/editor'
+  apiUrl: 'http://nginx:80',  // Your backend URL
+  wsUrl: 'ws://nginx:80/ws/editor'
 };
 

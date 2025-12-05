@@ -416,6 +416,16 @@ services:
     networks:
       - editor-network
 
+  client-app:
+    build: ../editor-client
+    container_name: editor-client
+    depends_on:
+      - nginx
+    ports:
+      - "4200:80"   # Access Angular app in browser
+    networks:
+      - editor-network
+
 networks:
   editor-network:
     driver: bridge
