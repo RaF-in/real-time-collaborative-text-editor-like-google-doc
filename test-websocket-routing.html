@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Routing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .left-panel {
+            flex: 1;
+        }
+        .right-panel {
+            flex: 1;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #output {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            height: 500px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 10px;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .warning {
+            color: orange;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Routing Test</h1>
+    <div class="info">
+        <strong>Testing Preferred Server Routing</strong><br>
+        This test verifies that WebSocket connections respect the preferred server selected by ZooKeeper.
+    </div>
+
+    <div class="container">
+        <div class="left-panel">
+            <h2>Test Controls</h2>
+
+            <div>
+                <label>Document ID:</label><br>
+                <input type="text" id="documentId" value="test-doc-123" placeholder="Enter document ID">
+            </div>
+
+            <div>
+                <button onclick="testServerAssignment()">1. Get Server Assignment</button>
+                <button onclick="testWebSocketConnection()">2. Test WebSocket Connection</button>
+                <button onclick="testMultipleDocuments()">3. Test Multiple Documents</button>
+            </div>
+
+            <div>
+                <button onclick="clearOutput()">Clear Output</button>
+            </div>
+
+            <div id="connectionStatus" style="margin-top: 20px; padding: 10px; background-color: #f0f0f0;">
+                Status: Not connected
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <h2>Output Log</h2>
+            <div id="output"></div>
+        </div>
+    </div>
+
+    <script>
+        const output = document.getElementById('output');
+        const connectionStatus = document.getElementById('connectionStatus');
+        let activeConnections = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' :
+                            type === 'error' ? 'error' :
+                            type === 'warning' ? 'warning' : '';
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function testServerAssignment() {
+            const docId = document.getElementById('documentId').value;
+            log(`\n🔍 Testing server assignment for document: ${docId}`, 'info');
+
+            try {
+                // Try different load balancer endpoints
+                const endpoints = [
+                    `http://localhost:4200/api/loadbalancer/server?key=${docId}`,
+                    `http://localhost:8081/api/loadbalancer/server?key=${docId}`
+                ];
+
+                for (const endpoint of endpoints) {
+                    try {
+                        log(`📡 Trying endpoint: ${endpoint}`);
+                        const response = await fetch(endpoint);
+
+                        if (!response.ok) {
+                            log(`❌ Failed: ${response.status} ${response.statusText}`, 'error');
+                            continue;
+                        }
+
+                        const data = await response.json();
+                        log(`✅ Success from ${endpoint}:`, 'success');
+                        log(`   Server ID: ${data.serverId}`);
+                        log(`   WebSocket URL: ${data.wsUrl}`);
+                        log(`   Source: ${data.source}`);
+
+                        // Parse WebSocket URL
+                        const wsUrl = new URL(data.wsUrl);
+                        const preferred = wsUrl.searchParams.get('preferred');
+                        const doc = wsUrl.searchParams.get('doc');
+
+                        log(`   Parsed - Document: ${doc}, Preferred: ${preferred}`);
+
+                        if (preferred !== data.serverId) {
+                            log(`⚠️ Warning: Preferred server (${preferred}) doesn't match assigned server (${data.serverId})`, 'warning');
+                        }
+
+                        return data;
+
+                    } catch (error) {
+                        log(`❌ Error with ${endpoint}: ${error.message}`, 'error');
+                    }
+                }
+
+            } catch (error) {
+                log(`💥 Fatal error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWebSocketConnection() {
+            const docId = document.getElementById('documentId').value;
+            log(`\n🔌 Testing WebSocket connection for document: ${docId}`, 'info');
+
+            try {
+                // Get server assignment first
+                const response = await fetch(`http://localhost:4200/api/loadbalancer/server?key=${docId}`);
+                const data = await response.json();
+
+                log(`📡 Connecting to: ${data.wsUrl}`);
+
+                const ws = new WebSocket(data.wsUrl);
+                const connIndex = activeConnections.length;
+                activeConnections.push(ws);
+
+                ws.onopen = () => {
+                    log(`✅ WebSocket ${connIndex} connected successfully!`, 'success');
+                    updateConnectionStatus(`Connected (${activeConnections.length} active)`);
+
+                    // Send a test message
+                    ws.send(JSON.stringify({
+                        type: 'TEST',
+                        payload: {
+                            documentId: docId,
+                            timestamp: Date.now()
+                        }
+                    }));
+                };
+
+                ws.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    log(`📨 Received WebSocket message:`, 'info');
+                    log(`   Type: ${message.type}`);
+                    if (message.type === 'CONNECTION_INFO') {
+                        log(`   Server ID: ${message.payload.serverId}`);
+                        log(`   Document ID: ${message.payload.documentId}`);
+                        log(`   Preferred Server: ${message.payload.preferredServer}`);
+
+                        if (message.payload.preferredServer === message.payload.serverId) {
+                            log(`✅ Connected to preferred server!`, 'success');
+                        } else {
+                            log(`⚠️ Connected to fallback server (preferred: ${message.payload.preferredServer}, actual: ${message.payload.serverId})`, 'warning');
+                        }
+                    }
+                    log(`   Payload: ${JSON.stringify(message.payload)}`);
+                };
+
+                ws.onerror = (error) => {
+                    log(`❌ WebSocket error: ${error}`, 'error');
+                };
+
+                ws.onclose = (event) => {
+                    log(`🔌 WebSocket ${connIndex} closed: ${event.code} - ${event.reason}`);
+                    const index = activeConnections.indexOf(ws);
+                    if (index > -1) {
+                        activeConnections.splice(index, 1);
+                    }
+                    updateConnectionStatus(`Closed (${activeConnections.length} active)`);
+                };
+
+            } catch (error) {
+                log(`💥 WebSocket connection error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMultipleDocuments() {
+            log('\n🔄 Testing multiple documents to verify consistent hashing...', 'info');
+
+            const testDocs = ['doc-alpha', 'doc-beta', 'doc-gamma', 'doc-alpha']; // doc-alpha repeated
+
+            for (const docId of testDocs) {
+                log(`\n📋 Testing document: ${docId}`);
+
+                try {
+                    const response = await fetch(`http://localhost:4200/api/loadbalancer/server?key=${docId}`);
+                    const data = await response.json();
+
+                    log(`   Assigned to: ${data.serverId}`);
+
+                    // Check if same document gets same server
+                    if (docId === 'doc-alpha' && testDocs.indexOf(docId) < testDocs.lastIndexOf(docId)) {
+                        // This is the first occurrence, store for comparison
+                        if (!window.firstDocAlphaServer) {
+                            window.firstDocAlphaServer = data.serverId;
+                        }
+                    } else if (docId === 'doc-alpha' && window.firstDocAlphaServer) {
+                        // This is the second occurrence, compare
+                        if (window.firstDocAlphaServer === data.serverId) {
+                            log(`   ✅ Consistent: doc-alpha consistently routed to ${data.serverId}`, 'success');
+                        } else {
+                            log(`   ⚠️ Inconsistent: doc-alpha first went to ${window.firstDocAlphaServer}, now ${data.serverId}`, 'warning');
+                        }
+                    }
+
+                } catch (error) {
+                    log(`   ❌ Error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            connectionStatus.textContent = `Status: ${status}`;
+            connectionStatus.style.backgroundColor = status.includes('Connected') ? '#d4edda' : '#f8d7da';
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+            log('Output cleared. Ready for new tests.');
+        }
+
+        // Initial message
+        log('WebSocket Routing Test Tool Ready!');
+        log('This tool tests the preferred server routing implementation.');
+        log('\nInstructions:');
+        log('1. Enter a document ID or use the default');
+        log('2. Click "Get Server Assignment" to see ZooKeeper selection');
+        log('3. Click "Test WebSocket Connection" to verify routing');
+        log('4. Use "Test Multiple Documents" to check consistent hashing');
+    </script>
+</body>
+</html>

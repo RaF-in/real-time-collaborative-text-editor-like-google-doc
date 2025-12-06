@@ -175,6 +175,8 @@ export class EditorStateService {
       }
     });
     
+    // Debugging - Check if this code is executed
+    console.log('🔍 INSERT DEBUG: character=', character, 'snapshot=', snap);
     this.addLog('info', `Insert '${character}' after: ${afterPosition}, before: ${beforePosition}`);
   }
   
@@ -184,20 +186,20 @@ export class EditorStateService {
   deleteCharacter(position: number): void {
     const doc = this.docId();
     const user = this.userId();
-    
+
     if (!doc || !user || !this.isConnected()) {
       console.warn('Cannot delete: not connected');
       return;
     }
-    
+
     const snap = this.snapshot();
     const fractionalPosition = this.crdtService.findDeletePosition(snap, position);
-    
+
     if (!fractionalPosition) {
       console.warn('Cannot delete: invalid position');
       return;
     }
-    
+
     this.wsService.send({
       type: 'OPERATION',
       docId: doc,
@@ -208,7 +210,7 @@ export class EditorStateService {
         fractionalPosition: fractionalPosition
       }
     });
-    
+
     this.addLog('info', `Delete at position: ${fractionalPosition}`);
   }
   
@@ -285,33 +287,44 @@ export class EditorStateService {
     
     const newSnapshot = this.crdtService.applyOperation(this.snapshot(), op);
     const newContent = this.crdtService.snapshotToContent(newSnapshot);
+    this.addLog('info', `new snapshot ${newSnapshot}`);
+    this.addLog('info', `new content ${newContent}`);
     
     this.snapshot.set(newSnapshot);
     this.content.set(newContent);
+
   }
   
   private handleOperationBroadcast(message: WebSocketMessage): void {
     if (!message.operation) return;
-    
+
     const op = message.operation;
+
+    // Skip processing if this is our own operation (to prevent duplicate insertion)
+    // SERVER-SIDE FIX: Commented out client-side exclusion to test server-side solution
+    // if (op.userId === this.userId()) {
+    //   this.addLog('info', `Skipping own operation broadcast: ${op.operationType}`);
+    //   return;
+    // }
+
     this.addLog('info', `Received operation from ${op.userId}: ${op.operationType}`);
-    
+
     this.isProcessingRemoteOp = true;
-    
+
     const newSnapshot = this.crdtService.applyOperation(this.snapshot(), op);
     const newContent = this.crdtService.snapshotToContent(newSnapshot);
-    
+
     if (op.serverId && op.serverSeqNum) {
       this.updateVersionVector(op.serverId, op.serverSeqNum);
-      
+
       if (this.crdtService.hasVersionGaps(this.versionVector(), op.serverId, op.serverSeqNum)) {
         this.requestSync();
       }
     }
-    
+
     this.snapshot.set(newSnapshot);
     this.content.set(newContent);
-    
+
     this.isProcessingRemoteOp = false;
   }
   

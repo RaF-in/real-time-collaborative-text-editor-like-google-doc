@@ -72,7 +72,7 @@ export class CRDTService {
     const beforePosition = index < snapshot.length
       ? snapshot[index].fractionalPosition
       : null;
-    
+
     return { afterPosition, beforePosition };
   }
   

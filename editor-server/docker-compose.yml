@@ -423,7 +423,9 @@ services:
       - editor-network
 
   client-app:
-    build: ../editor-client
+    build:
+      context: /home/rafinneaz/IdeaProjects/Real time collaborative text editor/editor-client
+      dockerfile: Dockerfile
     container_name: editor-client
     depends_on:
       - nginx

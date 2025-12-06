@@ -258,16 +258,27 @@ public class EditorWebSocketHandler extends TextWebSocketHandler {
         // Set user ID from session
         operation.setUserId(metadata.getUserId());
 
+        // Set the originating session ID BEFORE processing
+        operation.setOriginatingSessionId(sessionId);
+
+        logger.debug("Processing operation from session {} - Doc: {}, User: {}, Type: {}",
+                sessionId, operation.getDocId(), operation.getUserId(), operation.getOperationType());
+
         // Process operation through CRDT service
         CRDTOperation processed = crdtService.processOperation(operation);
 
-        logger.info("Processed operation - Session: {}, Doc: {}, User: {}, Type: {}, Pos: {}, Seq: {}",
+        // CRITICAL: Preserve the originating session ID after processing
+        // The returned operation might be a new instance due to DB operations
+        processed.setOriginatingSessionId(sessionId);
+
+        logger.info("Processed operation - Session: {}, Doc: {}, User: {}, Type: {}, Pos: {}, Seq: {}, Originating Session: {}",
                 sessionId,
                 processed.getDocId(),
                 processed.getUserId(),
                 processed.getOperationType(),
                 processed.getFractionalPosition(),
-                processed.getServerSeqNum());
+                processed.getServerSeqNum(),
+                processed.getOriginatingSessionId());
 
         // Send acknowledgment back to sender
         sendMessage(session, Map.of(
@@ -389,6 +400,20 @@ public class EditorWebSocketHandler extends TextWebSocketHandler {
         broadcastToDocument(docId, message, null);
     }
 
+    /**
+     * Broadcast operation to all clients subscribed to a document, excluding specified session
+     * This prevents sending the operation back to the original sender session only
+     */
+    public void broadcastToDocument(String docId, CRDTOperation operation, String excludeSessionId) {
+        Map<String, Object> message = Map.of(
+                "type", "OPERATION_BROADCAST",
+                "operation", operation,
+                "serverId", serverId
+        );
+
+        broadcastToDocument(docId, message, excludeSessionId);
+    }
+
     private void broadcastToDocument(String docId, Map<String, Object> message, String excludeSessionId) {
         Map<String, WebSocketSession> sessions = documentSessions.get(docId);
 
@@ -403,7 +428,12 @@ public class EditorWebSocketHandler extends TextWebSocketHandler {
             String sessionId = entry.getKey();
             WebSocketSession session = entry.getValue();
 
+            logger.debug("Checking session for broadcast - Session: {}, Excluding Session: {}",
+                    sessionId, excludeSessionId);
+
+            // Skip only the specific session that originated the operation
             if (excludeSessionId != null && sessionId.equals(excludeSessionId)) {
+                logger.debug("Excluding originating session {} from broadcast", sessionId);
                 continue;
             }
 
@@ -416,8 +446,8 @@ public class EditorWebSocketHandler extends TextWebSocketHandler {
             }
         }
 
-        logger.debug("Broadcast complete - Doc: {}, Success: {}, Failed: {}",
-                docId, successCount, failCount);
+        logger.debug("Broadcast complete - Doc: {}, Success: {}, Failed: {}, Excluded Session: {}",
+                docId, successCount, failCount, excludeSessionId);
     }
 
     private void sendMessage(WebSocketSession session, Object message) throws IOException {
@@ -456,6 +486,18 @@ public class EditorWebSocketHandler extends TextWebSocketHandler {
 
     public java.util.Set<String> getActiveDocuments() {
         return documentSessions.keySet();
+    }
+
+    /**
+     * Check if a specific session exists on this server
+     */
+    public boolean hasSession(String sessionId) {
+        for (java.util.Map<String, WebSocketSession> sessions : documentSessions.values()) {
+            if (sessions.containsKey(sessionId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Map<String, String> parseQueryParams(String query) {

@@ -4,6 +4,7 @@ spring:
   application:
     name: editor-server
 
+  
   jpa:
     hibernate:
       ddl-auto: update

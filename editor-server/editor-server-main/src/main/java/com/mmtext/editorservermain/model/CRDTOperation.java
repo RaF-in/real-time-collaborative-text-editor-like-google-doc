@@ -1,6 +1,7 @@
 package com.mmtext.editorservermain.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -41,10 +42,15 @@ public class CRDTOperation {
 
     @Column(nullable = false)
     private Boolean processed = false;
+    
+    // Transient field to track the originating WebSocket session
+    // This field is NOT persisted to database and is only used during broadcast
+    private transient String originatingSessionId;
 
     // Default Constructor
     public CRDTOperation() {
         this.timestamp = Instant.now();
+        this.originatingSessionId = null;
     }
 
     // Parameterized Constructor
@@ -141,5 +147,21 @@ public class CRDTOperation {
 
     public void setProcessed(Boolean processed) {
         this.processed = processed;
+    }
+
+    /**
+     * Get the originating WebSocket session ID that initiated this operation
+     * This is transient and not persisted to the database
+     */
+    public String getOriginatingSessionId() {
+        return originatingSessionId;
+    }
+
+    /**
+     * Set the originating WebSocket session ID
+     * This is used to exclude the sender from receiving their own operation back
+     */
+    public void setOriginatingSessionId(String originatingSessionId) {
+        this.originatingSessionId = originatingSessionId;
     }
 }

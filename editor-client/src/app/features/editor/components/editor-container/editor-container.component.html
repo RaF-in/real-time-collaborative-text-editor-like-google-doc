@@ -61,7 +61,8 @@
     }
     
     <!-- Editor Content -->
-    <app-editor-content 
+    <app-editor-content
+      #editorContent
       [content]="editorState.content()"
       [isConnected]="editorState.isConnected()"
       (contentChange)="onContentChange($event)"

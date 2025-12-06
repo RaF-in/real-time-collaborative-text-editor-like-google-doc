@@ -1,5 +1,5 @@
 // src/app/features/editor/components/editor-container/editor-container.component.ts
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -24,9 +24,13 @@ import { EditorToolbarComponent } from '../editor-toolbar/editor-toolbar.compone
 })
 export class EditorContainerComponent implements OnInit, OnDestroy {
   readonly showDebug = signal(false);
-  
+
+  // Use viewChild with signal for modern Angular
+  readonly editorContent = viewChild<EditorContentComponent>('editorContent');
+
   private destroy$ = new Subject<void>();
-  
+  private isProcessingRemoteOperation = false;
+
   constructor(
     private route: ActivatedRoute,
     readonly editorState: EditorStateService
@@ -48,12 +52,34 @@ export class EditorContainerComponent implements OnInit, OnDestroy {
   }
   
   onContentChange(event: { type: 'insert' | 'delete'; char?: string; position: number }): void {
-    if (this.editorState.isProcessingRemote()) return;
-    
+    // Check if this is during remote operation processing
+    if (this.editorState.isProcessingRemote()) {
+      // This is likely an echo or remote update, notify the editor component
+      const editorComponent = this.editorContent();
+      if (editorComponent) {
+        editorComponent.markRemoteUpdate();
+      }
+      return;
+    }
+
+    // This is a local operation
+    this.isProcessingRemoteOperation = false;
+
     if (event.type === 'insert' && event.char) {
       this.editorState.insertCharacter(event.char, event.position);
     } else if (event.type === 'delete') {
       this.editorState.deleteCharacter(event.position);
+    }
+  }
+
+  /**
+   * Call this when remote operations are being processed
+   */
+  private onRemoteOperationStart(): void {
+    this.isProcessingRemoteOperation = true;
+    const editorComponent = this.editorContent();
+    if (editorComponent) {
+      editorComponent.markRemoteUpdate();
     }
   }
   

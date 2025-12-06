@@ -28,7 +28,7 @@ public class RedisSubscriberService implements MessageListener {
             String channel = new String(message.getChannel());
             String body = new String(message.getBody());
 
-            logger.debug("Received message from Redis channel: {}", channel);
+            logger.info("Received message from Redis channel: {}", channel);
 
             CRDTOperation operation = objectMapper.readValue(body, CRDTOperation.class);
 
