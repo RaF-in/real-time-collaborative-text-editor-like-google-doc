@@ -22,4 +22,12 @@ public interface DocumentSnapshotRepository extends JpaRepository<DocumentSnapsh
     @Modifying
     @Query("UPDATE DocumentSnapshot s SET s.active = false WHERE s.docId = :docId AND s.fractionalPosition = :position")
     void deactivateByDocIdAndPosition(@Param("docId") String docId, @Param("position") String position);
+
+    // Method for gap detection
+    @Query("SELECT ds FROM DocumentSnapshot ds WHERE ds.docId = :docId AND ds.serverId = :serverId ORDER BY ds.serverSeqNum")
+    List<DocumentSnapshot> findByDocIdAndServerIdOrderByServerSeqNum(@Param("docId") String docId,
+                                                                     @Param("serverId") String serverId);
+
+    // Check for duplicate operations
+    boolean existsByDocIdAndServerIdAndServerSeqNum(String docId, String serverId, Long serverSeqNum);
 }

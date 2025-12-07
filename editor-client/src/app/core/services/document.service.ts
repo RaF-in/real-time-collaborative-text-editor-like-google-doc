@@ -1,7 +1,8 @@
 // src/app/core/services/document.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { CRDTOperation } from '../models/crdt-operation.model';
 import { DocumentSnapshot } from '../models/document-snapshot.model';
 import { VersionVector } from '../models/version-vector.model';
@@ -44,7 +45,14 @@ export class DocumentService {
    * Get document state (snapshot + version vector)
    */
   getDocumentState(docId: string): Observable<DocumentStateResponse> {
-    return this.http.get<DocumentStateResponse>(`${this.apiUrl}/api/documents/${docId}/state`);
+    return this.http.get<DocumentStateResponse>(`${this.apiUrl}/api/documents/${docId}/state`)
+      .pipe(
+        catchError(error => {
+          console.log('Document state fetch error:', error);
+          // Let the caller handle the error - don't return empty state here
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -90,6 +98,29 @@ export class DocumentService {
     return this.http.get<{ exists: boolean; id: string; title?: string; createdAt?: number }>(
       `${this.apiUrl}/api/documents/${docId}/exists`
     );
+  }
+
+  /**
+   * Helper method to check if document has any content
+   */
+  hasDocumentContent(state: DocumentStateResponse): boolean {
+    return state && (
+      (state.snapshot && state.snapshot.length > 0) ||
+      (state.content && state.content.length > 0) ||
+      (state.versionVector && Object.keys(state.versionVector).length > 0)
+    );
+  }
+
+  /**
+   * Create empty document state
+   */
+  createEmptyState(docId: string): DocumentStateResponse {
+    return {
+      docId: docId,
+      snapshot: [],
+      versionVector: {},
+      content: ''
+    };
   }
 }
 

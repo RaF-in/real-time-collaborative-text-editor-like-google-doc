@@ -91,33 +91,85 @@ export class EditorStateService {
     this.docId.set(docId);
     this.userId.set(userId);
     this.error.set(null);
-    
+
     this.addLog('info', `Connecting to document: ${docId} as user: ${userId}`);
-    
+
     try {
-      // Get server assignment using consistent hashing
+      // STEP 1: ALWAYS try to fetch existing document state first
+      this.addLog('info', `Fetching document state for: ${docId}`);
+
+      let documentExists = false;
+
+      try {
+        const state = await this.documentService.getDocumentState(docId).toPromise();
+
+        // Check if document actually has content
+        if (state && this.documentService.hasDocumentContent(state)) {
+          // Document exists and has content
+          documentExists = true;
+
+          // Set the document state
+          this.snapshot.set(state.snapshot || []);
+          this.versionVector.set(state.versionVector || {});
+          this.content.set(state.content || '');
+
+          this.addLog('success', `Loaded existing document with ${state.snapshot.length} characters`);
+          this.addLog('info', `Content preview: "${state.content.substring(0, 50)}${state.content.length > 50 ? '...' : ''}"`);
+        } else {
+          // Document exists but is empty (newly created but no operations yet)
+          this.addLog('info', 'Document exists but is empty');
+          this.snapshot.set([]);
+          this.versionVector.set({});
+          this.content.set('');
+        }
+      } catch (fetchError: any) {
+        // Document doesn't exist at all (completely new)
+        this.addLog('info', `Document not found: ${fetchError.status} ${fetchError.statusText}`);
+        this.addLog('info', 'Treating as new document');
+
+        // Initialize with empty state
+        this.snapshot.set([]);
+        this.versionVector.set({});
+        this.content.set('');
+      }
+
+      // STEP 2: Get server assignment for WebSocket connection
       this.addLog('info', 'Getting server assignment from load balancer...');
       const assignment = await this.loadBalancerService
         .getServerAssignment(userId)
         .toPromise();
-      
+
       if (!assignment) {
         throw new Error('Failed to get server assignment');
       }
-      
+
       this.addLog('success', `Assigned to server: ${assignment.serverId}`);
       this.currentServerId.set(assignment.serverId);
-      
-      // Connect to WebSocket
+
+      // STEP 3: Connect to WebSocket for real-time updates
       this.addLog('info', `Connecting to WebSocket: ${assignment.wsUrl}`);
       this.wsService.connect(assignment.wsUrl);
-      
+
       // Wait for connection
       await this.waitForConnection();
-      
-      // Subscribe to document
+
+      // STEP 4: Subscribe to document for real-time updates
       this.subscribeToDocument(docId, userId);
-      
+
+      this.isLoading.set(false);
+
+      // STEP 5: If this is a new document, initialize it
+      if (!documentExists) {
+        this.addLog('info', 'Initializing new document in snapshot service');
+        try {
+          await this.documentService.initializeDocument(docId).toPromise();
+          this.addLog('success', 'Document initialized successfully');
+        } catch (initError: any) {
+          // It's okay if this fails, the document will be created on first operation
+          this.addLog('warning', 'Document initialization failed (will be created on first operation): ' + initError.message);
+        }
+      }
+
     } catch (error: any) {
       this.addLog('error', `Connection failed: ${error.message}`);
       this.isLoading.set(false);
@@ -262,17 +314,35 @@ export class EditorStateService {
   
   private handleSubscribed(message: WebSocketMessage): void {
     this.addLog('success', `Subscribed to document: ${message.docId}`);
-    
-    const snap = message.snapshot || [];
-    const vv = message.versionVector || {};
-    const cont = message.content || '';
-    
-    this.snapshot.set(snap);
-    this.versionVector.set(vv);
-    this.content.set(cont);
+
+    // Don't override existing state - only set if empty
+    // This preserves the state we fetched earlier from snapshot service
+
+    const currentSnap = this.snapshot();
+    const currentVV = this.versionVector();
+    const currentContent = this.content();
+
+    // Log current state for debugging
+    this.addLog('info', `Current state - Snapshots: ${currentSnap.length}, VV: ${Object.keys(currentVV).length}, Content length: ${currentContent.length}`);
+
+    // Only update if we don't have any data
+    if (currentSnap.length === 0 && message.snapshot && message.snapshot.length > 0) {
+      this.snapshot.set(message.snapshot);
+      this.addLog('info', `Set snapshot from SUBSCRIBED: ${message.snapshot.length} characters`);
+    }
+
+    if (Object.keys(currentVV).length === 0 && message.versionVector && Object.keys(message.versionVector).length > 0) {
+      this.versionVector.set(message.versionVector);
+      this.addLog('info', `Set version vector from SUBSCRIBED`);
+    }
+
+    if (currentContent.length === 0 && message.content && message.content.length > 0) {
+      this.content.set(message.content);
+      this.addLog('info', `Set content from SUBSCRIBED: ${message.content.length} characters`);
+    }
+
     this.isLoading.set(false);
-    
-    this.addLog('info', `Loaded ${snap.length} characters`);
+    this.addLog('info', `Document ready - Characters: ${this.snapshot().length}, Content: "${this.content()}"`);
   }
   
   private handleOperationAck(message: WebSocketMessage): void {

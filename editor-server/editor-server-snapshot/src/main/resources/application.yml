@@ -2,22 +2,59 @@ spring:
   application:
     name: editor-server-snapshot
   kafka:
+    bootstrap-servers: kafka-1:19092,kafka-2:19092,kafka-3:19092
     consumer:
-      group-id: editor-server-main-consumer-group
-      auto-offset-reset: earliest         # or latest depending on use case
+      # Group ID will be set by KafkaConfig
+      auto-offset-reset: earliest         # Start from beginning if no offset
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
-      # Tuning consumer for high throughput
-      fetch-min-size: 1                    # minimum fetch
-      fetch-max-wait: 500                  # wait up to 500ms to send fetch request
-      max-poll-records: 500  # maximum number of records per poll
+      # Single message processing for reliability
+      max-poll-records: 1                  # Process one record at a time
+      enable-auto-commit: false            # Manual commit for better control
+      fetch-min-bytes: 1                   # Minimum fetch size
+      fetch-max-wait: 500                  # Max wait for fetch
+
+      # Connection settings
+      session-timeout-ms: 30000
+      heartbeat-interval-ms: 10000
+      max-poll-interval-ms: 300000        # 5 minutes
+
+      # Reliability settings
       properties:
-        session-timeout-ms: 15000
-        heartbeat-interval-ms: 5000
+        # Add retry configuration
+        retry.backoff.ms: 1000
+        retry.topic.dlq.enable: true
+
+    # Single message listener
     listener:
-      concurrency: 5
-      type: batch
+      ack-mode: manual_immediate
+      concurrency: 1                       # Single consumer for ordering
+
   jpa:
     hibernate:
       ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+# Debezium configuration
+debezium:
+  topic:
+    name: editor-server-main.public.crdt_operation_outbox_events
+  consumer:
+    group: editor-server-snapshot-cdc-consumer
+
+# Logging configuration
+logging:
+  level:
+    com.mmtext.editorserversnapshot: INFO
+    org.apache.kafka: WARN
+    org.springframework.kafka: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n"

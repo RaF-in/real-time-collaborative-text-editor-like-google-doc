@@ -1,0 +1,33 @@
+{
+  "name": "postgres-editor-db-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres-primary",
+    "database.port": "5432",
+    "database.user": "admin",
+    "database.password": "admin",
+    "database.dbname": "editor_db",
+    "database.server.name": "editor-server-main",
+    "table.include.list": "public.crdt_operation_outbox_events",
+    "topic.prefix": "editor-server-main",
+    "plugin.name": "pgoutput",
+    "publication.name": "dbz_publication",
+    "slot.name": "debezium_outbox_slot",
+    "snapshot.mode": "initial",
+    "snapshot.fetch.size": "10000",
+    "max.queue.size": "8192",
+    "max.batch.size": "2048",
+    "poll.interval.ms": "100",
+    "heartbeat.interval.ms": "5000",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "errors.tolerance": "all",
+    "errors.log.enable": "true",
+    "errors.deadletterqueue.topic.name": "editor-server-main.public.crdt_operation_outbox_events.dlq",
+    "errors.deadletterqueue.topic.replication.factor": "3",
+    "errors.deadletterqueue.context.headers.enable": "true"
+
+  }
+}

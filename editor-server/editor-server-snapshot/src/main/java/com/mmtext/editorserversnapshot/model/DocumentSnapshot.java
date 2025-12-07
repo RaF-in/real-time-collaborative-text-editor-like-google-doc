@@ -5,9 +5,16 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "document_snapshots", indexes = {
-        @Index(name = "idx_doc_position", columnList = "docId,fractionalPosition")
-})
+@Table(name = "document_snapshots",
+       indexes = {
+           @Index(name = "idx_doc_position", columnList = "docId,fractionalPosition"),
+           @Index(name = "idx_doc_server_seq", columnList = "docId,serverId,serverSeqNum")
+       },
+       uniqueConstraints = {
+           @UniqueConstraint(name = "uk_doc_server_seq",
+                           columnNames = {"docId", "serverId", "serverSeqNum"})
+       }
+)
 public class DocumentSnapshot {
 
     @Id

@@ -45,32 +45,72 @@ public class SnapshotService {
     public void applyOperationToSnapshot(CRDTOperation operation) {
         String docId = operation.getDocId();
         String position = operation.getFractionalPosition();
+        String serverId = operation.getServerId();
+        Long seqNum = operation.getServerSeqNum();
 
         try {
+            // Check for gaps in sequence numbers
+            if (!isValidSequence(docId, serverId, seqNum)) {
+                logger.warn("Sequence gap detected - Doc: {}, Server: {}, Seq: {}. Requesting missing operations.",
+                    docId, serverId, seqNum);
+                // TODO: Implement mechanism to request missing operations
+            }
+
             // PHASE 1: Prepare - Update document snapshot
             if ("INSERT".equals(operation.getOperationType())) {
                 handleInsert(operation);
             } else if ("DELETE".equals(operation.getOperationType())) {
                 handleDelete(docId, position);
+            } else {
+                logger.warn("Unknown operation type: {}", operation.getOperationType());
+                return;
             }
 
             // PHASE 2: Commit - Update version vector
-            updateVersionVector(docId, operation.getServerId(), operation.getServerSeqNum());
+            updateVersionVector(docId, serverId, seqNum);
 
             logger.info("Applied operation to snapshot - Doc: {}, Server: {}, Seq: {}, Type: {}",
-                    docId, operation.getServerId(), operation.getServerSeqNum(),
-                    operation.getOperationType());
+                    docId, serverId, seqNum, operation.getOperationType());
 
         } catch (Exception e) {
-            logger.error("Error applying operation to snapshot", e);
-            throw new RuntimeException("Snapshot update failed", e);
+            logger.error("Error applying operation to snapshot - Doc: {}, Server: {}, Seq: {}",
+                docId, serverId, seqNum, e);
+            throw new RuntimeException("Snapshot update failed for operation: " +
+                operation.getDocId() + ":" + operation.getServerId() + ":" + seqNum, e);
         }
+    }
+
+    /**
+     * Check if sequence number is valid (no gaps)
+     */
+    private boolean isValidSequence(String docId, String serverId, Long seqNum) {
+        Optional<VersionVector> existing = versionVectorRepository
+            .findByDocIdAndServerId(docId, serverId);
+
+        if (existing.isPresent()) {
+            Long lastSeq = existing.get().getSequenceNumber();
+            // Allow same sequence (idempotent) or next sequence
+            return seqNum <= lastSeq + 1;
+        }
+
+        // New server, any sequence is valid (should start from 1)
+        return true;
     }
 
     /**
      * Handle INSERT operation
      */
     private void handleInsert(CRDTOperation operation) {
+        // Check if already exists (idempotency)
+        if (snapshotRepository.existsByDocIdAndServerIdAndServerSeqNum(
+                operation.getDocId(),
+                operation.getServerId(),
+                operation.getServerSeqNum())) {
+            logger.debug("Insert operation already exists - Doc: {}, Server: {}, Seq: {}",
+                operation.getDocId(), operation.getServerId(), operation.getServerSeqNum());
+            return;
+        }
+
         DocumentSnapshot snapshot = new DocumentSnapshot(
                 operation.getDocId(),
                 operation.getFractionalPosition(),
@@ -187,5 +227,65 @@ public class SnapshotService {
         }
 
         return missingOps;
+    }
+
+    /**
+     * Detect gaps in sequence numbers for a document
+     */
+    public Map<String, List<Long>> detectGaps(String docId) {
+        Map<String, List<Long>> gaps = new HashMap<>();
+        Map<String, Long> versionVector = getVersionVector(docId);
+
+        for (Map.Entry<String, Long> entry : versionVector.entrySet()) {
+            String serverId = entry.getKey();
+            Long maxSeq = entry.getValue();
+
+            // Check if we have all sequences from 1 to maxSeq
+            List<Long> snapshots = snapshotRepository
+                .findByDocIdAndServerIdOrderByServerSeqNum(docId, serverId)
+                .stream()
+                .map(DocumentSnapshot::getServerSeqNum)
+                .sorted()
+                .collect(Collectors.toList());
+
+            List<Long> missing = new ArrayList<>();
+            Long expected = 1L;
+
+            for (Long actual : snapshots) {
+                while (expected < actual) {
+                    missing.add(expected);
+                    expected++;
+                }
+                expected = actual + 1;
+            }
+
+            // Check if max in snapshots matches version vector
+            Long maxSnapshotSeq = snapshots.isEmpty() ? 0L : snapshots.get(snapshots.size() - 1);
+            while (expected <= maxSeq) {
+                missing.add(expected);
+                expected++;
+            }
+
+            if (!missing.isEmpty()) {
+                gaps.put(serverId, missing);
+                logger.warn("Detected gaps for doc: {}, server: {}, missing sequences: {}",
+                    docId, serverId, missing);
+            }
+        }
+
+        return gaps;
+    }
+
+    /**
+     * Request missing operations from primary database
+     * This would be called when gaps are detected
+     */
+    public void requestMissingOperations(String docId, String serverId, List<Long> missingSeqs) {
+        logger.info("Requesting missing operations - Doc: {}, Server: {}, Sequences: {}",
+            docId, serverId, missingSeqs);
+
+        // TODO: Implement mechanism to request from primary server
+        // This could be via REST API, RPC, or another Kafka topic
+        // For now, we just log the gap
     }
 }

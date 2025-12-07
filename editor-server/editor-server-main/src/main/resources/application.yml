@@ -1,22 +1,20 @@
-
+# ========================================
+# application.yml - UPDATED
+# ========================================
 
 spring:
   application:
-    name: editor-server
+    name: editor-server-main
 
-  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    baseline-version: 0
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        jdbc:
-          batch_size: 50
-        order_inserts: true
-        order_updates: true
+
   data:
     redis:
       host: redis
@@ -49,11 +47,10 @@ debezium:
     name: postgres-primary.editor_db.crdt_operations
   consumer:
 
-
 # Application configuration for WebSocket routing
 app:
   client:
-    base-url: ${NGINX_CLIENT_BASE_URL:localhost:4200}  # Default for development
+    base-url: ${NGINX_CLIENT_BASE_URL:localhost:4200}
   environment: ${ENVIRONMENT:development}
 
 # ZooKeeper configuration
@@ -61,6 +58,14 @@ zookeeper:
   connection-string: ${ZOOKEEPER_CONNECT:zookeeper:2181}
   session-timeout: 30000
   connection-timeout: 15000
+
+# Enable detailed logging for debugging
+logging:
+  level:
+    org.flywaydb: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.mmtext: DEBUG
 
 ---
 # Profile for Kubernetes (when ready)
@@ -76,7 +81,7 @@ app:
 
 logging:
   level:
-    com.editor: INFO
+    com.mmtext: INFO
     org.springframework.web.socket: DEBUG
 
 management:

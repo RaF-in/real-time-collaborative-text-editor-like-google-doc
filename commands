@@ -1,3 +1,6 @@
 docker compose down client-app
 docker compose build --no-cache client-app
 docker compose up -d client-app
+
+#All in one
+docker compose down && docker compose build --no-cache client-app && docker compose up -d
