@@ -8,11 +8,13 @@
         <outputRelativeToContentRoot value="true" />
         <module name="editor-server" />
         <module name="editor-server-snapshot" />
+        <module name="editor-auth-server" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="editor-auth-server" options="-parameters" />
       <module name="editor-server" options="-parameters" />
       <module name="editor-server-snapshot" options="-parameters" />
     </option>
