@@ -14,6 +14,10 @@ public class SignupRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
+    @Pattern(
+        regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        message = "Email must be a valid email address (e.g., user@example.com)"
+    )
     private String email;
 
     @NotBlank(message = "Password is required")

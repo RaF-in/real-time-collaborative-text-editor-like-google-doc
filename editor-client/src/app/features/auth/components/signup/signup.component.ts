@@ -61,7 +61,7 @@ export class SignupComponent {
       ]],
       email: ['', [
         Validators.required,
-        Validators.email
+        CustomValidators.email()
       ]],
       password: ['', [
         Validators.required,

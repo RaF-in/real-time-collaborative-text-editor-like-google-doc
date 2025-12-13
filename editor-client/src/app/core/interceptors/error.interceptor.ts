@@ -18,10 +18,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else {
         // Server-side error
         if (error.status === 401) {
-          // Unauthorized - clear token and redirect to login
-          tokenService.removeAccessToken();
-          router.navigate(['/auth/login']);
-          errorMessage = 'Session expired. Please login again.';
+          // Only redirect if not already on login and not a refresh request
+          if (!req.url.includes('/auth/refresh') && 
+              !router.url.includes('/auth/login')) {
+            // Unauthorized - clear token and redirect to login
+            tokenService.removeAccessToken();
+            router.navigate(['/auth/login']);
+            errorMessage = 'Session expired. Please login again.';
+          } else {
+            errorMessage = 'Invalid credentials';
+          }
         } else if (error.status === 403) {
           // Forbidden - CSRF or permission error
           if (error.error?.message) {

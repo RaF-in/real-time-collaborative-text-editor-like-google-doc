@@ -65,7 +65,7 @@ export class AuthService {
    */
   signup(request: SignupRequest): Observable<ApiResponse<AuthResponse>> {
     this.isLoadingSignal.set(true);
-
+    
     return this.http.post<ApiResponse<AuthResponse>>(
       `${this.API_URL}/api/auth/signup`,
       request,
@@ -89,7 +89,7 @@ export class AuthService {
    */
   login(request: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     this.isLoadingSignal.set(true);
-
+    
     return this.http.post<ApiResponse<AuthResponse>>(
       `${this.API_URL}/api/auth/login`,
       request,
@@ -116,6 +116,7 @@ export class AuthService {
     
     if (!csrfToken) {
       console.error('CSRF token not found');
+      this.handleLogout();
       return throwError(() => new Error('CSRF token not found'));
     }
 
@@ -136,11 +137,13 @@ export class AuthService {
             response.data.accessToken,
             response.data.expiresIn
           );
+          console.log('Token refreshed successfully');
         }
       }),
       catchError(error => {
+        console.error('Token refresh failed:', error);
         // Refresh failed - logout user
-        this.logout();
+        this.handleLogout();
         return throwError(() => error);
       })
     );
@@ -171,7 +174,7 @@ export class AuthService {
    */
   getCurrentUser(): Observable<ApiResponse<User>> {
     return this.http.get<ApiResponse<User>>(
-      `${this.API_URL}/auth/me`
+      `${this.API_URL}/api/auth/me`
     ).pipe(
       tap(response => {
         if (response.success && response.data) {
@@ -208,7 +211,7 @@ export class AuthService {
     this.currentUserSignal.set(authResponse.user);
     this.isAuthenticatedSignal.set(true);
 
-    // Navigate to homepage (document hub)
+    // Navigate to home or dashboard
     this.router.navigate(['/home']);
   }
 

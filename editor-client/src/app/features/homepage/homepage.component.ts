@@ -99,7 +99,16 @@ export class HomepageComponent implements OnInit {
     }
 
     logout(): void {
-        this.authService.logout();
+        this.authService.logout().subscribe({
+            next: () => {
+                // Logout successful
+            },
+            error: (error) => {
+                console.error('Logout error:', error);
+                // Even on error, local state will be cleared by authService
+            }
+        });
+        this.showUserMenu = false;
     }
 
     getInitials(): string {

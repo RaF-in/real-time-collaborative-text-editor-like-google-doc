@@ -56,6 +56,31 @@ export class CustomValidators {
   }
 
   /**
+   * Email validator with stricter validation
+   * Requires: proper email format with domain extension
+   */
+  static email(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+
+      if (!value) {
+        return null;
+      }
+
+      // Strict email regex pattern
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      const valid = emailRegex.test(value);
+
+      return valid ? null : {
+        email: {
+          invalidFormat: true,
+          message: 'Please enter a valid email address (e.g., user@example.com)'
+        }
+      };
+    };
+  }
+
+  /**
    * Password match validator for confirm password
    */
   static passwordMatch(passwordField: string, confirmPasswordField: string): ValidatorFn {
