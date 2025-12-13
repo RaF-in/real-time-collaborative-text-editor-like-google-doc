@@ -447,7 +447,7 @@ services:
       - NGINX_CLIENT_BASE_URL=localhost:4200
 
   auth-server:
-    build: ./auth-server
+    build: ./editor-auth-server
     container_name: auth-server
     depends_on:
       postgres-auth:
@@ -460,26 +460,54 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-auth:5432/auth_db
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin
-      # JWT
-#      JWT_ISSUER: https://auth-service
-#      JWT_KEY_PATH: /app/jwt-keys
 
-      # OAuth2 (You need to set these)
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
+      # JWT Configuration
+      JWT_ISSUER: ${JWT_ISSUER:-http://auth-server:8080}
+      JWT_KEY_PATH: ${JWT_KEY_PATH:-/tmp/jwt-keys}
+      JWT_ACCESS_TOKEN_EXPIRATION_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:-15}
+      JWT_REFRESH_TOKEN_EXPIRATION_DAYS: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:-14}
 
-      # CORS
-      CORS_ORIGINS: http://localhost:3000,http://localhost:4200
+      # OAuth2 Configuration (commented out until implementation)
+      # GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}
+      # GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
 
-      # Frontend
-      FRONTEND_URL: http://localhost:3000
+      # CORS Configuration
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://client-app,http://localhost:4200}
+      CORS_ALLOWED_METHODS: ${CORS_ALLOWED_METHODS:-GET,POST,PUT,DELETE,OPTIONS}
+      CORS_ALLOWED_HEADERS: ${CORS_ALLOWED_HEADERS:-Content-Type,Authorization,X-CSRF-TOKEN,X-Requested-With,DNT,User-Agent,If-Modified-Since,Cache-Control,Range}
+      CORS_ALLOW_CREDENTIALS: ${CORS_ALLOW_CREDENTIALS:-true}
+      CORS_MAX_AGE: ${CORS_MAX_AGE:-3600}
+
+      # Frontend Configuration
+      FRONTEND_URL: ${FRONTEND_URL:-http://client-app}
+      APP_FRONTEND_OAUTH_REDIRECT_PATH: ${APP_FRONTEND_OAUTH_REDIRECT_PATH:-/auth/callback}
+
+      # Rate Limiting
+      APP_AUTH_RATE_LIMIT_LOGIN_ATTEMPTS: ${APP_AUTH_RATE_LIMIT_LOGIN_ATTEMPTS:-5}
+      APP_AUTH_RATE_LIMIT_WINDOW_MINUTES: ${APP_AUTH_RATE_LIMIT_WINDOW_MINUTES:-15}
+
+      # Password Policy
+      APP_AUTH_PASSWORD_MIN_LENGTH: ${APP_AUTH_PASSWORD_MIN_LENGTH:-8}
+      APP_AUTH_PASSWORD_REQUIRE_UPPERCASE: ${APP_AUTH_PASSWORD_REQUIRE_UPPERCASE:-true}
+      APP_AUTH_PASSWORD_REQUIRE_LOWERCASE: ${APP_AUTH_PASSWORD_REQUIRE_LOWERCASE:-true}
+      APP_AUTH_PASSWORD_REQUIRE_DIGIT: ${APP_AUTH_PASSWORD_REQUIRE_DIGIT:-true}
+      APP_AUTH_PASSWORD_REQUIRE_SPECIAL: ${APP_AUTH_PASSWORD_REQUIRE_SPECIAL:-true}
+
+      # Account Lockout
+      APP_AUTH_ACCOUNT_LOCKOUT_MAX_ATTEMPTS: ${APP_AUTH_ACCOUNT_LOCKOUT_MAX_ATTEMPTS:-5}
+      APP_AUTH_ACCOUNT_LOCKOUT_LOCKOUT_DURATION_MINUTES: ${APP_AUTH_ACCOUNT_LOCKOUT_LOCKOUT_DURATION_MINUTES:-30}
+
+      # Logging
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+      LOGGING_LEVEL_COM_AUTHSERVICE: ${LOGGING_LEVEL_COM_AUTHSERVICE:-DEBUG}
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY:-DEBUG}
 
       # Spring Profile
-      # SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
     networks:
       - editor-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9085/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -492,16 +520,16 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     ports:
-      - "5432:5434"
+      - "5434:5432"
     volumes:
       - postgres-auth-data:/var/lib/postgresql/data
-      - ./init-scripts/auth-init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: [ "postgres", "-c", "wal_level=logical", "-c", "wal_keep_size=256", "-c", "max_slot_wal_keep_size=1024" ]
+    command: [ "postgres" ]
     networks:
       - editor-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d editor_db"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d auth_db"]
       interval: 10s
       timeout: 5s
       retries: 5

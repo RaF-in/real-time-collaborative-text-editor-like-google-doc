@@ -1,6 +1,15 @@
 spring:
   application:
     name: editor-server-snapshot
+
+  # JWT Configuration - OAuth2 Resource Server
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-server:8080
+          jwk-set-uri: http://auth-server:8080/.well-known/jwks.json
+
   kafka:
     bootstrap-servers: kafka-1:19092,kafka-2:19092,kafka-3:19092
     consumer:

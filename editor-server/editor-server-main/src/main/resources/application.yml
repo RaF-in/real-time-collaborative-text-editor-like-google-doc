@@ -41,6 +41,14 @@ editor:
       username: snapshot_user
       password: snapshot_pass
 
+# JWT Configuration - OAuth2 Resource Server
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-server:8080
+          jwk-set-uri: http://auth-server:8080/.well-known/jwks.json
+
 # Debezium CDC configuration
 debezium:
   topic:

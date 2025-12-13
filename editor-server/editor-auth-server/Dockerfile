@@ -23,7 +23,7 @@ FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 
 # Expose the port your Spring Boot application listens on
-EXPOSE 4000
+EXPOSE 8080
 
 # Copy the built JAR file from the builder stage
 COPY --from=builder /app/target/*.jar app.jar

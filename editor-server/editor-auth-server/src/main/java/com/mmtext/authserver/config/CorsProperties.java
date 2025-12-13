@@ -10,6 +10,7 @@ public class CorsProperties {
     private String allowedHeaders;
     private boolean allowCredentials;
     private long maxAge;
+    private String exposedHeaders;
 
     public String getAllowedOrigins() {
         return allowedOrigins;
@@ -49,5 +50,13 @@ public class CorsProperties {
 
     public void setMaxAge(long maxAge) {
         this.maxAge = maxAge;
+    }
+
+    public String getExposedHeaders() {
+        return exposedHeaders;
+    }
+
+    public void setExposedHeaders(String exposedHeaders) {
+        this.exposedHeaders = exposedHeaders;
     }
 }

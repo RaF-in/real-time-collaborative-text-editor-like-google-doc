@@ -14,6 +14,10 @@ import java.util.UUID;
 
 public class RefreshToken {
 
+    // Default constructor for JPA
+    public RefreshToken() {
+    }
+
     @Id
     @Column(name = "token", length = 100, nullable = false)
     private String token;

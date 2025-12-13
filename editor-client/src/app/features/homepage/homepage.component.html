@@ -1,45 +1,161 @@
 <div class="homepage-container">
-  <div class="homepage-content">
-    <!-- Header Section -->
-    <header class="homepage-header">
-      <div class="logo-section">
-        <div class="logo-icon">📝</div>
-        <h1 class="app-title">Collaborative Editor</h1>
+  <!-- Header Navigation -->
+  <header class="homepage-header">
+    <div class="header-left">
+      <div class="logo-section" routerLink="/">
+        <div class="logo-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="#1a73e8" font-size="32" font-weight="400" font-family="Google Sans, sans-serif">A</text>
+          </svg>
+        </div>
+        <h1 class="app-title">Text Editor</h1>
       </div>
-      <p class="app-subtitle">Create and collaborate on documents in real-time</p>
-    </header>
+    </div>
 
-    <!-- Start New Document Section -->
-    <section class="document-section">
-      <h2 class="section-title">Start a new document</h2>
-      
-      <div class="document-templates">
-        <!-- Blank Document Card -->
-        <div class="template-card blank-doc" (click)="createBlankDocument()">
-          <div class="template-preview">
-            <div class="blank-page">
-              <div class="blank-line"></div>
-              <div class="blank-line"></div>
-              <div class="blank-line"></div>
-              <div class="blank-line short"></div>
+    <div class="header-center">
+      <div class="search-container">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search documents"
+          autocomplete="off"
+        >
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- User Menu -->
+      <div class="user-menu">
+        <button class="avatar-button" (click)="toggleUserMenu()">
+          <div class="user-avatar">
+            {{ getInitials() }}
+          </div>
+        </button>
+
+        <!-- User Menu Dropdown -->
+        <div class="user-menu-dropdown" [class.show]="showUserMenu" *ngIf="showUserMenu">
+          <div class="user-info-header">
+            <div class="user-avatar-large">
+              {{ getInitials() }}
+            </div>
+            <div class="user-details">
+              <p class="user-name">{{ currentUser()?.username }}</p>
+              <p class="user-email">{{ currentUser()?.email }}</p>
             </div>
           </div>
-          <div class="template-info">
-            <div class="template-icon">+</div>
-            <span class="template-name">Blank</span>
+          <div class="user-menu-divider"></div>
+          <div class="user-menu-items">
+            <a class="menu-item" routerLink="/profile">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+              <span>My Account</span>
+            </a>
+            <a class="menu-item" routerLink="/dashboard">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+              </svg>
+              <span>Dashboard</span>
+            </a>
+            <a class="menu-item" routerLink="/settings">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+              </svg>
+              <span>Settings</span>
+            </a>
+            <div class="user-menu-divider"></div>
+            <a class="menu-item" href="https://support.google.com/docs" target="_blank">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+              </svg>
+              <span>Help & Support</span>
+            </a>
+            <a class="menu-item" (click)="logout()">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" />
+              </svg>
+              <span>Sign out</span>
+            </a>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </header>
 
-    <!-- Recent Documents Section (Optional - for future enhancement) -->
-    <section class="recent-section">
-      <h2 class="section-title">Recent documents</h2>
-      <div class="empty-state">
-        <div class="empty-icon">📄</div>
-        <p class="empty-text">No recent documents</p>
-        <p class="empty-subtext">Documents you create will appear here</p>
-      </div>
-    </section>
-  </div>
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="homepage-content">
+      <!-- Start New Document Section -->
+      <section class="document-section">
+        <h2 class="section-title">Start a new document</h2>
+
+        <div class="document-templates">
+          <!-- Blank Document Card -->
+          <div class="template-card blank-doc" (click)="createBlankDocument()">
+            <div class="template-preview">
+              <div class="blank-page">
+                <div class="blank-line"></div>
+                <div class="blank-line"></div>
+                <div class="blank-line"></div>
+                <div class="blank-line short"></div>
+              </div>
+            </div>
+            <div class="template-info">
+              <div class="template-icon">+</div>
+              <span class="template-name">Blank</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Documents Section -->
+      <section class="recent-section" *ngIf="recentDocuments.length > 0">
+        <h2 class="section-title">Recent documents</h2>
+        <div class="documents-grid">
+          <div
+            class="document-card"
+            *ngFor="let doc of recentDocuments"
+            (click)="openDocument(doc.id)"
+            title="{{ doc.title }}">
+            <div class="document-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#5f6368">
+                <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+              </svg>
+            </div>
+            <h3 class="document-title">
+              {{ doc.title | truncate:30 }}
+            </h3>
+            <div class="document-content">
+              <p class="document-preview">
+                {{ getDocumentPreview(doc.content) | truncate:100 }}
+              </p>
+              <div class="document-meta">
+                <span class="last-modified">
+                  Opened {{ doc.lastModified | relativeTime }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Empty State (when no recent documents) -->
+      <section class="recent-section" *ngIf="recentDocuments.length === 0">
+        <h2 class="section-title">Recent documents</h2>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="#5f6368">
+              <path d="M36 4c-9.94 0-18 8.06-18 18v24c0 9.94 8.06 18 18 18s18-8.06 18-18V22c0-9.94-8.06-18-18-18zm-14 18c0-7.72 6.28-14 14-14s14 6.28 14 14v24c0 7.72-6.28 14-14 14s-14-6.28-14-14V22z"/>
+              <circle cx="36" cy="26" r="6"/>
+            </svg>
+          </div>
+          <p class="empty-text">No recent documents</p>
+          <p class="empty-subtext">Create your first document to get started</p>
+        </div>
+      </section>
+    </div>
+  </main>
 </div>

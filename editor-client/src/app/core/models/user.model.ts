@@ -1,8 +1,13 @@
 // src/app/core/models/user.model.ts
 export interface User {
   id: string;
-  name: string;
+  username: string;
   email: string;
-  avatarColor?: string;
-  isOnline?: boolean;
+  provider: 'LOCAL' | 'GOOGLE' | 'FACEBOOK' | 'GITHUB';
+  enabled: boolean;
+  emailVerified: boolean;
+  roles: string[];
+  permissions: string[];
+  createdAt: string;
+  lastLoginAt?: string;
 }
