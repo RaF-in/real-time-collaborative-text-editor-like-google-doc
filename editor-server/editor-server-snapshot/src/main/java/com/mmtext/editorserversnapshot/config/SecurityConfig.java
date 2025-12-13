@@ -1,8 +1,8 @@
 package com.mmtext.editorserversnapshot.config;
 
 
-import com.mmtext.editorservermain.config.CorsProperties;
-import com.mmtext.editorservermain.securityHandler.JwtAuthenticationConverter;
+import com.mmtext.editorserversnapshot.config.CorsProperties;
+import com.mmtext.editorserversnapshot.securityHandler.JwtAuthenticationConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

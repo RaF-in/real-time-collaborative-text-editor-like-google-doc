@@ -9,6 +9,7 @@ import com.mmtext.authserver.exception.UserAlreadyExistsException;
 import com.mmtext.authserver.model.Permission;
 import com.mmtext.authserver.model.Role;
 import com.mmtext.authserver.model.User;
+import com.mmtext.authserver.repo.PermissionRepository;
 import com.mmtext.authserver.repo.RoleRepository;
 import com.mmtext.authserver.repo.UserRepository;
 import org.slf4j.Logger;
@@ -33,11 +34,14 @@ public class UserService implements UserDetailsService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     public final UserRepository userRepository; // Made public for admin controller
     private final RoleRepository roleRepository;
+    private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository,
+                      PermissionRepository permissionRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.permissionRepository = permissionRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -68,6 +72,9 @@ public class UserService implements UserDetailsService {
                 false, 0, Set.of(userRole));
 
         User savedUser = userRepository.save(user);
+
+        // Ensure user has all necessary permissions
+        ensureUserPermissions(savedUser.getId());
 
         log.info("Created new user: {}", savedUser.getUsername());
 
@@ -221,6 +228,58 @@ public class UserService implements UserDetailsService {
                 user.getEnabled(), user.getEmailVerified(), roleNames, permissionNames,
                 user.getCreatedAt(), user.getLastLoginAt()
         );
+    }
+
+    /**
+     * Ensure ROLE_USER has all necessary document permissions
+     * This method can be called after user creation to verify permissions
+     */
+    @Transactional
+    public void ensureUserPermissions(UUID userId) {
+        User user = findById(userId);
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new ResourceNotFoundException("ROLE_USER not found"));
+
+        // Check if user has ROLE_USER
+        if (!user.getRoles().contains(userRole)) {
+            user.getRoles().add(userRole);
+            userRepository.save(user);
+            log.info("Added ROLE_USER to user: {}", user.getUsername());
+        }
+
+        // Required document permissions for regular users
+        String[] requiredPermissions = {
+            "DOCUMENT_CREATE",
+            "DOCUMENT_READ",
+            "DOCUMENT_WRITE",
+            "DOCUMENT_DELETE",
+            "DOCUMENT_LIST",
+            "DOCUMENT_ACCESS"
+        };
+
+        // Check and add missing permissions to ROLE_USER
+        for (String permissionName : requiredPermissions) {
+            if (!userRole.hasPermission(permissionName)) {
+                // Find the permission
+                permissionRepository.findByName(permissionName)
+                    .ifPresent(permission -> {
+                        userRole.getPermissions().add(permission);
+                        roleRepository.save(userRole);
+                        log.info("Added permission {} to ROLE_USER", permissionName);
+                    });
+            }
+        }
+    }
+
+    /**
+     * Debug method to check user permissions
+     */
+    public Set<String> getUserPermissions(UUID userId) {
+        User user = findById(userId);
+        return user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(Permission::getName)
+                .collect(Collectors.toSet());
     }
 }
 

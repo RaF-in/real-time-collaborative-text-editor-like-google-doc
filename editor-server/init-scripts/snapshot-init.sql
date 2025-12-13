@@ -32,5 +32,5 @@ CREATE INDEX IF NOT EXISTS idx_doc_active ON document_snapshots(doc_id, active);
 CREATE INDEX IF NOT EXISTS idx_version_doc ON version_vectors(doc_id);
 
 -- Grant necessary permissions
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO snapshot_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO snapshot_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;

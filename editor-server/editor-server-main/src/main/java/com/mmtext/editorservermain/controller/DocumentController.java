@@ -1,8 +1,10 @@
 package com.mmtext.editorservermain.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -26,12 +28,13 @@ public class DocumentController {
 
     /**
      * Create a new document with a unique ID
-     * 
+     *
      * POST /api/documents/create
      * Response: { "id": "doc-123456789-abc", "createdAt": 1234567890, "title": "Untitled Document" }
      */
     @PostMapping("/create")
-    public ResponseEntity<Map<String, Object>> createDocument() {
+    @PreAuthorize("hasAuthority('PERMISSION_DOCUMENT_CREATE')")
+    public ResponseEntity<Map<String, Object>> createDocument(Principal principal) {
         // Generate unique document ID
         String timestamp = String.valueOf(System.currentTimeMillis());
         String randomPart = UUID.randomUUID().toString().substring(0, 8);
@@ -59,12 +62,13 @@ public class DocumentController {
 
     /**
      * Check if a document exists
-     * 
+     *
      * GET /api/documents/{id}/exists
      * Response: { "exists": true, "id": "doc-123" }
      */
     @GetMapping("/{id}/exists")
-    public ResponseEntity<Map<String, Object>> checkDocumentExists(@PathVariable String id) {
+    @PreAuthorize("hasAuthority('PERMISSION_DOCUMENT_READ')")
+    public ResponseEntity<Map<String, Object>> checkDocumentExists(@PathVariable String id, Principal principal) {
         boolean exists = documents.containsKey(id);
         
         Map<String, Object> response = new HashMap<>();
@@ -82,11 +86,12 @@ public class DocumentController {
 
     /**
      * Get document metadata
-     * 
+     *
      * GET /api/documents/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getDocument(@PathVariable String id) {
+    @PreAuthorize("hasAuthority('PERMISSION_DOCUMENT_READ')")
+    public ResponseEntity<Map<String, Object>> getDocument(@PathVariable String id, Principal principal) {
         DocumentMetadata metadata = documents.get(id);
         
         if (metadata == null) {
@@ -111,7 +116,8 @@ public class DocumentController {
      * Get all documents (for listing)
      */
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getAllDocuments() {
+    @PreAuthorize("hasAuthority('PERMISSION_DOCUMENT_LIST')")
+    public ResponseEntity<Map<String, Object>> getAllDocuments(Principal principal) {
         Map<String, Object> response = new HashMap<>();
         response.put("documents", documents.values());
         response.put("count", documents.size());

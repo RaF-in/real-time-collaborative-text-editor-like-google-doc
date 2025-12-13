@@ -28,8 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_processed ON crdt_operations(processed);
 ALTER TABLE crdt_operations REPLICA IDENTITY FULL;
 
 -- Grant necessary permissions
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO editor_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO editor_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;
 
 ---
 

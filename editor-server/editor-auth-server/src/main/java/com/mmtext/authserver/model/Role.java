@@ -82,4 +82,9 @@ public class Role {
     public void setPermissions(Set<Permission> permissions) {
         this.permissions = permissions;
     }
+
+    public boolean hasPermission(String permissionName) {
+        return permissions.stream()
+                .anyMatch(p -> p.getName().equals(permissionName));
+    }
 }
