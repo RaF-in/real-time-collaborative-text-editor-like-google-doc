@@ -96,12 +96,20 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .build();
             response.addHeader("Set-Cookie", csrfCookie.toString());
 
-            // Redirect to frontend with access token
-            String targetUrl = UriComponentsBuilder
+            // Get OAuth2 state parameter (contains return URL)
+            String state = request.getParameter("state");
+
+            // Build redirect URL with token and state
+            UriComponentsBuilder builder = UriComponentsBuilder
                     .fromUriString(appConfig.getFrontend().getUrl() + appConfig.getFrontend().getOauthRedirectPath())
-                    .queryParam("token", accessToken)
-                    .build()
-                    .toUriString();
+                    .queryParam("token", accessToken);
+
+            // Include state parameter if it exists
+            if (state != null && !state.isEmpty()) {
+                builder.queryParam("state", state);
+            }
+
+            String targetUrl = builder.build().toUriString();
 
             log.info("OAuth2 authentication successful for user: {}", user.getEmail());
             getRedirectStrategy().sendRedirect(request, response, targetUrl);

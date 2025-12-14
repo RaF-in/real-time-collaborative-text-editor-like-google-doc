@@ -77,10 +77,10 @@ public class SecurityConfig {
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
-                // OAuth2 Login Configuration (commented out until implementation)
-                // .oauth2Login(oauth2 -> oauth2
-                //         .successHandler(oAuth2AuthenticationSuccessHandler)
-                // )
+                // OAuth2 Login Configuration
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder)

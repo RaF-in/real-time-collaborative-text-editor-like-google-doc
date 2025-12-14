@@ -31,3 +31,26 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables - NEVER COMMIT ###
+.env
+.env.*
+*.env
+
+### OAuth2 and API Keys - NEVER COMMIT ###
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+*.client-id
+*.client-secret
+
+### JWT Keys and Certificates - NEVER COMMIT ###
+jwt-keys/
+*.pem
+*.key
+*.crt
+*.p12
+
+### Logs ###
+logs/
+*.log
+application-*.log

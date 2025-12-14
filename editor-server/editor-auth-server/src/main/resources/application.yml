@@ -19,24 +19,24 @@ spring:
     locations: classpath:db/migration
     validate-on-migrate: true
 
-  # OAuth2 Configuration (commented out until implementation)
-  # security:
-  #   oauth2:
-  #     client:
-  #       registration:
-  #         google:
-  #           client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
-  #           client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
-  #           scope:
-  #             - email
-  #             - profile
-  #           redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
-  #       provider:
-  #         google:
-  #           authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
-  #           token-uri: https://oauth2.googleapis.com/token
-  #           user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-  #           user-name-attribute: sub
+  # OAuth2 Configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            scope:
+              - email
+              - profile
+            redirect-uri: "http://localhost:8081/login/oauth2/code/google"
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
 
 # JWT Configuration
 jwt:
