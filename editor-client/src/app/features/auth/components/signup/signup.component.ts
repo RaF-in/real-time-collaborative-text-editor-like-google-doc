@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SignupRequest } from '../../../../core/models/auth.model';
 import { CustomValidators } from '../../../../core/utils/validators.util';
@@ -19,6 +19,7 @@ export class SignupComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   // Signals
   isLoading = this.authService.isLoading;
@@ -68,6 +69,17 @@ export class SignupComponent {
         Validators.minLength(8),
         CustomValidators.passwordStrength()
       ]]
+    });
+
+    // Store return URL from query params for signup too
+    this.route.queryParams.subscribe(params => {
+      console.log('Signup: Query params:', params);
+      if (params['returnUrl']) {
+        console.log('Signup: Found return URL in params:', params['returnUrl']);
+        this.authService.storeReturnUrl(params['returnUrl']);
+      } else {
+        console.log('Signup: No return URL found in params');
+      }
     });
   }
 
@@ -135,6 +147,16 @@ export class SignupComponent {
   }
 
   signupWithGoogle(): void {
-    window.location.href = this.googleSignupUrl;
+    // Get current return URL from sessionStorage or query params
+    const returnUrl = sessionStorage.getItem('returnUrl') ||
+                      this.route.snapshot.queryParams['returnUrl'] ||
+                      '/home';
+
+    // Build OAuth URL with state parameter containing return URL
+    const oauthUrl = new URL(this.googleSignupUrl);
+    oauthUrl.searchParams.set('state', encodeURIComponent(returnUrl));
+
+    // Redirect to backend OAuth2 endpoint
+    window.location.href = oauthUrl.toString();
   }
 }

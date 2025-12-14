@@ -21,6 +21,7 @@ export class OAuthCallbackComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       const token = params['token'];
       const error = params['error'];
+      const returnUrl = params['state']; // OAuth2 state parameter can contain return URL
 
       if (error) {
         console.error('OAuth error:', error);
@@ -31,9 +32,13 @@ export class OAuthCallbackComponent implements OnInit {
       }
 
       if (token) {
+        // Store return URL if present in OAuth state
+        if (returnUrl) {
+          this.authService.storeReturnUrl(decodeURIComponent(returnUrl));
+        }
         // Handle OAuth callback with token
         this.authService.handleOAuthCallback(token);
-        // AuthService will navigate to dashboard
+        // AuthService will handle navigation based on stored return URL
       } else {
         console.error('No token received from OAuth');
         this.router.navigate(['/auth/login']);

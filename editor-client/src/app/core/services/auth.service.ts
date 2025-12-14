@@ -201,6 +201,8 @@ export class AuthService {
    * Handle successful authentication
    */
   private handleAuthSuccess(authResponse: AuthResponse): void {
+    console.log('Auth: Handling authentication success');
+
     // Store access token
     this.tokenService.setAccessToken(
       authResponse.accessToken,
@@ -211,8 +213,19 @@ export class AuthService {
     this.currentUserSignal.set(authResponse.user);
     this.isAuthenticatedSignal.set(true);
 
-    // Navigate to home or dashboard
-    this.router.navigate(['/home']);
+    // Get return URL from sessionStorage
+    const returnUrl = sessionStorage.getItem('returnUrl');
+    console.log('Auth: Retrieved return URL from sessionStorage:', returnUrl);
+
+    if (returnUrl && this.isSafeRedirect(returnUrl)) {
+      console.log('Auth: Redirecting to return URL:', returnUrl);
+      this.router.navigateByUrl(returnUrl);
+      sessionStorage.removeItem('returnUrl');
+    } else {
+      // Navigate to home or dashboard
+      console.log('Auth: No valid return URL, redirecting to home');
+      this.router.navigate(['/home']);
+    }
   }
 
   /**
@@ -232,6 +245,36 @@ export class AuthService {
     // Token received from OAuth2 redirect
     // We need to get user info and set up state
     this.tokenService.setAccessToken(token, 900); // 15 minutes default
-    this.loadCurrentUser().subscribe();
+    this.loadCurrentUser().subscribe({
+      next: () => {
+        // After loading user, handle redirect if present
+        const returnUrl = sessionStorage.getItem('returnUrl');
+        if (returnUrl && this.isSafeRedirect(returnUrl)) {
+          this.router.navigateByUrl(returnUrl);
+          sessionStorage.removeItem('returnUrl');
+        } else {
+          this.router.navigate(['/home']);
+        }
+      }
+    });
+  }
+
+  /**
+   * Store return URL in sessionStorage for redirect after authentication
+   */
+  storeReturnUrl(url: string): void {
+    console.log('Auth: Storing return URL:', url);
+    sessionStorage.setItem('returnUrl', url);
+  }
+
+  /**
+   * Validate if redirect URL is safe (internal only)
+   */
+  private isSafeRedirect(url: string): boolean {
+    console.log('Auth: Checking if redirect URL is safe:', url);
+    // Ensure URL starts with / and doesn't start with //
+    const isSafe = (url && url.startsWith('/') && !url.startsWith('//')) ? true : false;
+    console.log('Auth: URL is safe:', isSafe);
+    return isSafe;
   }
 }
