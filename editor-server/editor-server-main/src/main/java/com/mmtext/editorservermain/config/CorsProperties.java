@@ -5,11 +5,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "cors")
 public class CorsProperties {
-    private String allowedOrigins;
-    private String allowedMethods;
-    private String allowedHeaders;
-    private boolean allowCredentials;
-    private long maxAge;
+    private String allowedOrigins = "http://localhost:4200";
+    private String allowedMethods = "GET,POST,PUT,DELETE,OPTIONS";
+    private String allowedHeaders = "Content-Type,Authorization,X-CSRF-TOKEN,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Range";
+    private boolean allowCredentials = true;
+    private long maxAge = 3600;
 
     public String getAllowedOrigins() {
         return allowedOrigins;

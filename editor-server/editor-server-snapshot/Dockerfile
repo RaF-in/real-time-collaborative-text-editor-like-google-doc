@@ -22,8 +22,11 @@ FROM eclipse-temurin:25-jre-jammy
 
 WORKDIR /app
 
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Expose the port your Spring Boot application listens on
-EXPOSE 4000
+EXPOSE 8080
 
 # Copy the built JAR file from the builder stage
 COPY --from=builder /app/target/*.jar app.jar

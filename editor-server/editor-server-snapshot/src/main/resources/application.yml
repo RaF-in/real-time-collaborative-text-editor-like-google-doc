@@ -42,7 +42,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
@@ -67,3 +67,11 @@ logging:
     org.springframework.kafka: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n"
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ORIGINS:http://client-app,http://localhost:4200}
+  allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+  allowed-headers: ${CORS_ALLOWED_HEADERS:Content-Type,Authorization,X-CSRF-TOKEN,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Range}
+  allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+  exposed-headers: Set-Cookie
+  max-age: ${CORS_MAX_AGE:3600}
