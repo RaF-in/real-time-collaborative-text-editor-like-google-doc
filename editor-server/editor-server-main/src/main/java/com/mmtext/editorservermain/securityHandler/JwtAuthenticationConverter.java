@@ -21,10 +21,7 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        Collection<GrantedAuthority> authorities = Stream.concat(
-                defaultGrantedAuthoritiesConverter.convert(jwt).stream(),
-                extractAuthorities(jwt).stream()
-        ).collect(Collectors.toSet());
+        Collection<GrantedAuthority> authorities = extractAuthorities(jwt);
 
         return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
     }
@@ -44,7 +41,7 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
                     .forEach(authorities::add);
         }
 
-        // Add permissions (they should already have PERMISSION_ prefix from database)
+        // Add permissions and add PERMISSION_ prefix if not present
         if (permissions != null && !permissions.isEmpty()) {
             permissions.stream()
                     .filter(perm -> null != perm && !perm.trim().isEmpty())
@@ -57,10 +54,12 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
     }
 
     /**
-     * Normalize permission format from colon to underscore
-     * e.g., "user:read" -> "USER_READ"
+     * Normalize permission format from colon to underscore and add PERMISSION_ prefix
+     * e.g., "user:read" -> "PERMISSION_USER_READ"
+     * e.g., "DOCUMENT_READ" -> "PERMISSION_DOCUMENT_READ"
      */
     private String normalizePermission(String permission) {
-        return permission.toUpperCase().replace(':', '_');
+        String normalized = permission.toUpperCase().replace(':', '_');
+        return normalized.startsWith("PERMISSION_") ? normalized : "PERMISSION_" + normalized;
     }
 }

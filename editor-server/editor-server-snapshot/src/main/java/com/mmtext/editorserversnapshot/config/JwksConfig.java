@@ -14,6 +14,9 @@ public class JwksConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withJwkSetUri("http://auth-server/.well-known/jwks.json").build();
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri("http://auth-server:8080/.well-known/jwks.json").build();
+
+        // Disable claim set validation for testing
+        return jwtDecoder;
     }
 }

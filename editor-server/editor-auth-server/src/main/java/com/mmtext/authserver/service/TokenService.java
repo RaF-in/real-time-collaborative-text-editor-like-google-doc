@@ -35,7 +35,6 @@ public class TokenService {
 
         List<String> roles = user.getRoles().stream()
                 .map(Role::getName)
-                .map(name -> name.replaceFirst("^ROLE_", ""))
                 .collect(Collectors.toList());
 
         List<String> permissions = user.getRoles().stream()

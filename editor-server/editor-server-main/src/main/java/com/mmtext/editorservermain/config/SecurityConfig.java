@@ -40,7 +40,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/auth/**") // We handle CSRF manually with double-submit pattern
+                        .ignoringRequestMatchers("/api/auth/**", "/ws/editor/**")
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
@@ -56,7 +56,9 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/.well-known/**",
                                 "/actuator/health",
-                                "/actuator/info"
+                                "/actuator/info",
+                                "/api/loadbalancer/**",
+                                "/ws/editor/**"
                         ).permitAll()
 
                         // Admin endpoints
