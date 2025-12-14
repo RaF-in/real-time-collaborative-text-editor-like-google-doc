@@ -3,7 +3,10 @@ package com.mmtext.editorservermain.controller;
 import com.mmtext.editorservermain.service.ZooKeeperConsistentHashingService;
 import com.mmtext.editorservermain.service.ZooKeeperServiceRegistry;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -16,6 +19,7 @@ import java.util.*;
  * - Consistent hashing for server selection
  * - Real-time server health monitoring
  * - Preferred server routing through client nginx
+ * - Authentication and authorization for secure access
  */
 @RestController
 @RequestMapping("/api/loadbalancer")
@@ -36,11 +40,29 @@ public class LoadBalancerController {
 
     /**
      * Get server assignment for a user/document using consistent hashing
+     * Requires DOCUMENT_ACCESS permission
      *
      * Example: GET /api/loadbalancer/server?key=user123
      */
     @GetMapping("/server")
-    public ResponseEntity<Map<String, String>> getServerForKey(@RequestParam String key) {
+    @PreAuthorize("hasAuthority('PERMISSION_DOCUMENT_ACCESS')")
+    public ResponseEntity<Map<String, String>> getServerForKey(
+            @RequestParam String key,
+            Authentication authentication) {
+
+        // Get authenticated user
+        String userId = authentication.getName();
+
+        // TODO: Add document ownership/permission check here
+        // For now, any authenticated user with DOCUMENT_ACCESS can access any document
+        // In production, you might want to check:
+        // if (!documentService.canUserAccessDocument(userId, key)) {
+        //     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+        //         "error", "Access denied",
+        //         "message", "You don't have permission to access this document"
+        //     ));
+        // }
+
         String server = consistentHashing.getServer(key);
 
         if (server == null) {
@@ -65,7 +87,8 @@ public class LoadBalancerController {
                 "wsUrl", wsUrl,
                 "apiUrl", apiUrl,
                 "source", "zookeeper-with-preferred-routing",
-                "routing", "client-nginx"
+                "routing", "client-nginx",
+                "userId", userId
         ));
     }
 

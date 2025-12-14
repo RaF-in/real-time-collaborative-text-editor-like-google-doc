@@ -57,7 +57,6 @@ public class SecurityConfig {
                                 "/.well-known/**",
                                 "/actuator/health",
                                 "/actuator/info",
-                                "/api/loadbalancer/**",
                                 "/ws/editor/**"
                         ).permitAll()
 
