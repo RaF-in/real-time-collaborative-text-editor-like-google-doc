@@ -26,6 +26,10 @@ public class VersionVector {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
+
     // Default Constructor
     public VersionVector() {
         this.updatedAt = Instant.now();
@@ -78,5 +82,13 @@ public class VersionVector {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 }

@@ -42,6 +42,10 @@ public class DocumentSnapshot {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
+
     // Default Constructor
     public DocumentSnapshot() {
         this.createdAt = Instant.now();
@@ -122,5 +126,13 @@ public class DocumentSnapshot {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 }
