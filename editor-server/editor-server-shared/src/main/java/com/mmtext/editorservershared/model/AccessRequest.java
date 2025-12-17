@@ -1,0 +1,202 @@
+package com.mmtext.editorservershared.model;
+import com.mmtext.editorservershared.enums.PermissionLevel;
+import com.mmtext.editorservershared.enums.RequestStatus;
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(name = "access_requests",
+        indexes = {
+                @Index(name = "idx_access_requests_document", columnList = "document_id"),
+                @Index(name = "idx_access_requests_requester", columnList = "requester_id"),
+                @Index(name = "idx_access_requests_status", columnList = "status"),
+                @Index(name = "idx_access_requests_pending", columnList = "document_id, status")
+        })
+
+public class AccessRequest {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = "document_id", nullable = false)
+    private UUID documentId;
+
+    @Column(name = "requester_id", nullable = false)
+    private UUID requesterId;
+
+    @Column(name = "requester_email", nullable = false)
+    private String requesterEmail;
+
+    @Column(name = "requester_name")
+    private String requesterName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "requested_permission", nullable = false, length = 20)
+    private PermissionLevel requestedPermission;
+
+    @Column(name = "message", columnDefinition = "TEXT")
+    private String message;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private RequestStatus status = RequestStatus.PENDING;
+
+    @CreationTimestamp
+    @Column(name = "requested_at", nullable = false, updatable = false)
+    private Instant requestedAt;
+
+    @Column(name = "resolved_at")
+    private Instant resolvedAt;
+
+    @Column(name = "resolved_by")
+    private UUID resolvedBy;
+
+    // Transient fields
+    @Transient
+    private String documentTitle;
+
+    @Transient
+    private UUID documentOwnerId;
+
+    @Transient
+    private String documentOwnerEmail;
+
+    @Transient
+    private String documentOwnerName;
+
+
+    public void approve(UUID resolvedBy) {
+        this.status = RequestStatus.APPROVED;
+        this.resolvedAt = Instant.now();
+        this.resolvedBy = resolvedBy;
+    }
+
+    public void reject(UUID resolvedBy) {
+        this.status = RequestStatus.REJECTED;
+        this.resolvedAt = Instant.now();
+        this.resolvedBy = resolvedBy;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(UUID documentId) {
+        this.documentId = documentId;
+    }
+
+    public UUID getRequesterId() {
+        return requesterId;
+    }
+
+    public void setRequesterId(UUID requesterId) {
+        this.requesterId = requesterId;
+    }
+
+    public String getRequesterEmail() {
+        return requesterEmail;
+    }
+
+    public void setRequesterEmail(String requesterEmail) {
+        this.requesterEmail = requesterEmail;
+    }
+
+    public String getRequesterName() {
+        return requesterName;
+    }
+
+    public void setRequesterName(String requesterName) {
+        this.requesterName = requesterName;
+    }
+
+    public PermissionLevel getRequestedPermission() {
+        return requestedPermission;
+    }
+
+    public void setRequestedPermission(PermissionLevel requestedPermission) {
+        this.requestedPermission = requestedPermission;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public RequestStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RequestStatus status) {
+        this.status = status;
+    }
+
+    public Instant getRequestedAt() {
+        return requestedAt;
+    }
+
+    public void setRequestedAt(Instant requestedAt) {
+        this.requestedAt = requestedAt;
+    }
+
+    public Instant getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public void setResolvedAt(Instant resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
+
+    public UUID getResolvedBy() {
+        return resolvedBy;
+    }
+
+    public void setResolvedBy(UUID resolvedBy) {
+        this.resolvedBy = resolvedBy;
+    }
+
+    public String getDocumentTitle() {
+        return documentTitle;
+    }
+
+    public void setDocumentTitle(String documentTitle) {
+        this.documentTitle = documentTitle;
+    }
+
+    public UUID getDocumentOwnerId() {
+        return documentOwnerId;
+    }
+
+    public void setDocumentOwnerId(UUID documentOwnerId) {
+        this.documentOwnerId = documentOwnerId;
+    }
+
+    public String getDocumentOwnerEmail() {
+        return documentOwnerEmail;
+    }
+
+    public void setDocumentOwnerEmail(String documentOwnerEmail) {
+        this.documentOwnerEmail = documentOwnerEmail;
+    }
+
+    public String getDocumentOwnerName() {
+        return documentOwnerName;
+    }
+
+    public void setDocumentOwnerName(String documentOwnerName) {
+        this.documentOwnerName = documentOwnerName;
+    }
+}

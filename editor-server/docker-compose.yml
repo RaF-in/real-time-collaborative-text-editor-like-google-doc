@@ -462,7 +462,7 @@ services:
 
   client-app:
     build:
-      context: /home/rafinneaz/IdeaProjects/Real time collaborative text editor/editor-client
+      context: ../editor-client
       dockerfile: Dockerfile
     container_name: editor-client
     depends_on:
