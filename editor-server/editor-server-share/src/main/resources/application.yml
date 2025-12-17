@@ -2,3 +2,66 @@
 spring:
   application:
     name: editor-server-share
+
+# gRPC Server Configuration
+grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9092}
+
+# Custom gRPC service configuration
+
+  auth:
+    service:
+      host: ${AUTH_GRPC_HOST:localhost}
+      port: ${AUTH_GRPC_PORT:9090}
+  editor:
+    service:
+      host: ${EDITOR_GRPC_HOST:localhost}
+      port: ${EDITOR_GRPC_PORT:9091}
+
+# Resilience4j Configuration for Circuit Breaker and Retry
+resilience4j:
+  circuitbreaker:
+    instances:
+      authService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        recordExceptions:
+          - io.grpc.StatusRuntimeException
+      editorService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        recordExceptions:
+          - io.grpc.StatusRuntimeException
+
+  retry:
+    instances:
+      authService:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - io.grpc.StatusRuntimeException
+        ignoreExceptions:
+          - io.grpc.StatusRuntimeException
+      editorService:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - io.grpc.StatusRuntimeException
+        ignoreExceptions:
+          - io.grpc.StatusRuntimeException
+
+# Application-specific configuration
+app:
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}

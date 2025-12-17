@@ -1,7 +1,11 @@
 package com.mmtext.editorservershared.service;
 
-import com.mmtext.editorservershared.dto.AccessRequestResponse;
-import com.mmtext.editorservershared.dto.RequestAccessDto;
+import com.mmtext.editorservershare.client.grpc.AuthServiceClient;
+import com.mmtext.editorservershare.client.grpc.EditorServiceClient;
+import com.mmtext.editorservershare.domain.User;
+import com.mmtext.editorservershare.domain.Document;
+import com.mmtext.editorservershare.domain.DocumentInfo;
+import com.mmtext.editorservershared.dto.*;
 import com.mmtext.editorservershared.enums.RequestStatus;
 import com.mmtext.editorservershared.exception.ResourceNotFoundException;
 import com.mmtext.editorservershared.model.AccessRequest;
@@ -9,27 +13,43 @@ import com.mmtext.editorservershared.model.DocumentPermission;
 import com.mmtext.editorservershared.repo.AccessRequestRepository;
 import com.mmtext.editorservershared.repo.DocumentPermissionRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AccessRequestService {
 
+    private static final Logger log = LoggerFactory.getLogger(AccessRequestService.class);
+
     private final AccessRequestRepository accessRequestRepository;
     private final DocumentPermissionRepository permissionRepository;
+    private final EditorServiceClient editorServiceClient;
+    private final AuthServiceClient authServiceClient;
     private final EmailService emailService;
     private final AuditService auditService;
 
-
-    private final Map<UUID, String> approvalTokens = new HashMap<>();
+    private final Map<String, String> approvalTokens = new HashMap<>();
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public AccessRequestService(AccessRequestRepository accessRequestRepository, DocumentPermissionRepository permissionRepository, EmailService emailService, AuditService auditService) {
+    @Autowired
+    public AccessRequestService(
+            AccessRequestRepository accessRequestRepository,
+            DocumentPermissionRepository permissionRepository,
+            EditorServiceClient editorServiceClient,
+            AuthServiceClient authServiceClient,
+            EmailService emailService,
+            AuditService auditService) {
         this.accessRequestRepository = accessRequestRepository;
         this.permissionRepository = permissionRepository;
+        this.editorServiceClient = editorServiceClient;
+        this.authServiceClient = authServiceClient;
         this.emailService = emailService;
         this.auditService = auditService;
     }
@@ -46,7 +66,7 @@ public class AccessRequestService {
             throw new IllegalArgumentException("You already have access to this document");
         }
 
-        var documentInfo = editorServiceClient.getDocumentInfo(documentId);
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
         if (!documentInfo.getAllowAccessRequests()) {
             throw new IllegalArgumentException("This document doesn't accept access requests");
         }
@@ -75,7 +95,7 @@ public class AccessRequestService {
         approvalTokens.put(accessRequest.getId(), token);
 
         // Send email to owner
-        var ownerInfo = authServiceClient.getUserById(documentInfo.getOwnerId());
+        var ownerInfo = authServiceClient.getUserById(UUID.fromString(documentInfo.getOwnerId()));
         emailService.sendAccessRequestEmail(
                 ownerInfo.getEmail(),
                 ownerInfo.getName(),
@@ -162,7 +182,7 @@ public class AccessRequestService {
             throw new AccessDeniedException("Only owner can view access requests");
         }
 
-        var documentInfo = editorServiceClient.getDocumentInfo(documentId);
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
         return accessRequestRepository.findByDocumentIdAndStatus(documentId, RequestStatus.PENDING)
                 .stream()
                 .map(req -> mapToResponse(req, documentInfo))
@@ -183,7 +203,7 @@ public class AccessRequestService {
     }
 
     private AccessRequestResponse mapToResponse(AccessRequest request,
-                                                EditorServiceClient.DocumentInfo documentInfo) {
+                                                DocumentInfo documentInfo) {
         return AccessRequestResponse.builder()
                 .id(request.getId())
                 .documentId(request.getDocumentId())

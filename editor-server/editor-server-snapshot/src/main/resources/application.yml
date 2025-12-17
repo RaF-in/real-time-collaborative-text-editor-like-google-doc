@@ -2,6 +2,11 @@ spring:
   application:
     name: editor-server-snapshot
 
+# gRPC Server Configuration
+grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9091}
+
   # JWT Configuration - OAuth2 Resource Server
   security:
     oauth2:

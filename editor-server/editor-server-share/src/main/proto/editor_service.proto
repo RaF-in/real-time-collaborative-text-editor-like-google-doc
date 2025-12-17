@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package com.mmtext.editor;
+
+import "common.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option java_package = "com.mmtext.editor.grpc";
+option java_outer_classname = "EditorServiceProto";
+
+service EditorService {
+  // Get document information
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+
+  // Get document basic info (for sharing and access requests)
+  rpc GetDocumentInfo(GetDocumentInfoRequest) returns (GetDocumentInfoResponse);
+
+  // Check if document exists
+  rpc DocumentExists(DocumentExistsRequest) returns (DocumentExistsResponse);
+
+  // Get document with access control
+  rpc GetDocumentWithAccess(GetDocumentWithAccessRequest) returns (GetDocumentWithAccessResponse);
+
+  // Update document sharing settings
+  rpc UpdateSharingSettings(UpdateSharingSettingsRequest) returns (com.mmtext.common.Response);
+
+  // Batch get documents
+  rpc GetDocumentsByIds(GetDocumentsByIdsRequest) returns (GetDocumentsByIdsResponse);
+
+  // Stream document updates (for future use)
+  rpc StreamDocumentUpdates(StreamDocumentUpdatesRequest) returns (stream DocumentUpdate);
+}
+
+message GetDocumentRequest {
+  string document_id = 1;
+  string requestor_id = 2; // User making the request
+}
+
+message GetDocumentResponse {
+  oneof result {
+    com.mmtext.common.Document document = 1;
+    string error = 2;
+  }
+}
+
+message GetDocumentInfoRequest {
+  string document_id = 1;
+}
+
+message GetDocumentInfoResponse {
+  oneof result {
+    DocumentInfo document_info = 1;
+    string error = 2;
+  }
+}
+
+message DocumentInfo {
+  string id = 1;
+  string doc_id = 2;
+  string title = 3;
+  string owner_id = 4;
+  bool allow_access_requests = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message DocumentExistsRequest {
+  string document_id = 1;
+}
+
+message DocumentExistsResponse {
+  bool exists = 1;
+  string document_id = 2;
+}
+
+message GetDocumentWithAccessRequest {
+  string document_id = 1;
+  string requestor_id = 2;
+}
+
+message GetDocumentWithAccessResponse {
+  oneof result {
+    DocumentWithAccess document = 1;
+    string error = 2;
+  }
+}
+
+message DocumentWithAccess {
+  com.mmtext.common.Document document = 1;
+  PermissionLevel permission_level = 2;
+  bool can_share = 3;
+  bool can_edit = 4;
+}
+
+enum PermissionLevel {
+  NONE = 0;
+  READ = 1;
+  WRITE = 2;
+  OWNER = 3;
+}
+
+message UpdateSharingSettingsRequest {
+  string document_id = 1;
+  string owner_id = 2;
+  bool allow_access_requests = 3;
+  string updated_by = 4;
+}
+
+message GetDocumentsByIdsRequest {
+  repeated string document_ids = 1;
+  string requestor_id = 2;
+}
+
+message GetDocumentsByIdsResponse {
+  repeated com.mmtext.common.Document documents = 1;
+  map<string, string> errors = 2; // document_id -> error message
+}
+
+message StreamDocumentUpdatesRequest {
+  string document_id = 1;
+  string user_id = 2;
+}
+
+message DocumentUpdate {
+  string document_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string update_type = 3;
+  string updated_by = 4;
+}

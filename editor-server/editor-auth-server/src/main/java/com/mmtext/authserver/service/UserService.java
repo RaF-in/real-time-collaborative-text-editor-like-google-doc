@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -141,6 +142,31 @@ public class UserService implements UserDetailsService {
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+    }
+
+    /**
+     * Find user by ID - returns Optional for gRPC compatibility
+     */
+    public Optional<User> getUserById(UUID userId) {
+        return userRepository.findById(userId)
+                .filter(user -> user.getEnabled() != null && user.getEnabled() && !user.isDeleted());
+    }
+
+    /**
+     * Find user by email - returns Optional for gRPC compatibility
+     */
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .filter(user -> user.getEnabled() != null && user.getEnabled() && !user.isDeleted());
+    }
+
+    /**
+     * Get all active users for gRPC search functionality
+     */
+    public List<User> getAllUsers() {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getEnabled() != null && user.getEnabled() && !user.isDeleted())
+                .collect(Collectors.toList());
     }
 
     @Transactional

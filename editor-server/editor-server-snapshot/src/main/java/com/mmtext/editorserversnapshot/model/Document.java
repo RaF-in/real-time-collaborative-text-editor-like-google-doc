@@ -22,6 +22,9 @@ public class Document {
     @Column(name = "owner_id", nullable = false, length = 255)
     private String ownerId;
 
+    @Column(name = "allow_access_requests", nullable = false)
+    private Boolean allowAccessRequests = true;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -44,6 +47,14 @@ public class Document {
         this.docId = docId;
         this.title = title;
         this.ownerId = ownerId;
+    }
+
+    public Document(String docId, String title, String ownerId, Boolean allowAccessRequests) {
+        this();
+        this.docId = docId;
+        this.title = title;
+        this.ownerId = ownerId;
+        this.allowAccessRequests = allowAccessRequests != null ? allowAccessRequests : true;
     }
 
     @PreUpdate
@@ -82,6 +93,14 @@ public class Document {
 
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public Boolean getAllowAccessRequests() {
+        return allowAccessRequests;
+    }
+
+    public void setAllowAccessRequests(Boolean allowAccessRequests) {
+        this.allowAccessRequests = allowAccessRequests != null ? allowAccessRequests : true;
     }
 
     public Instant getCreatedAt() {
@@ -129,6 +148,7 @@ public class Document {
                 ", docId='" + docId + '\'' +
                 ", title='" + title + '\'' +
                 ", ownerId='" + ownerId + '\'' +
+                ", allowAccessRequests=" + allowAccessRequests +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

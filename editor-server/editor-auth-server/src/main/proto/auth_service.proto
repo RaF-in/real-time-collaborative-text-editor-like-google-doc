@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package com.mmtext.auth;
+
+import "common.proto";
+import "google/protobuf/empty.proto";
+
+option java_package = "com.mmtext.auth.grpc";
+option java_outer_classname = "AuthServiceProto";
+
+service AuthService {
+  // Get user by ID
+  rpc GetUserById(GetUserByIdRequest) returns (GetUserByIdResponse);
+
+  // Get user by email
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailResponse);
+
+  // Get multiple users by IDs
+  rpc GetUsersByIds(GetUsersByIdsRequest) returns (GetUsersByIdsResponse);
+
+  // Search users by email pattern
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
+
+  // Validate user exists
+  rpc ValidateUser(ValidateUserRequest) returns (ValidateUserResponse);
+}
+
+message GetUserByIdRequest {
+  string user_id = 1;
+}
+
+message GetUserByIdResponse {
+  oneof result {
+    com.mmtext.common.User user = 1;
+    string error = 2;
+  }
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message GetUserByEmailResponse {
+  oneof result {
+    com.mmtext.common.User user = 1;
+    string error = 2;
+  }
+}
+
+message GetUsersByIdsRequest {
+  repeated string user_ids = 1;
+}
+
+message GetUsersByIdsResponse {
+  repeated com.mmtext.common.User users = 1;
+  map<string, string> errors = 2; // user_id -> error message
+}
+
+message SearchUsersRequest {
+  string email_pattern = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message SearchUsersResponse {
+  repeated com.mmtext.common.User users = 1;
+  int32 total_count = 2;
+}
+
+message ValidateUserRequest {
+  string user_id = 1;
+}
+
+message ValidateUserResponse {
+  bool valid = 1;
+  com.mmtext.common.User user = 2; // Optional, populated if valid is true
+}
