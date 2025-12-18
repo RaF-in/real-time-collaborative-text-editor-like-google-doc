@@ -6,6 +6,13 @@ public class ShareResult {
     private String message;
     private DocumentPermissionResponse permission;
 
+    public ShareResult(String email, boolean b, String userNotFound) {
+        this.email = email;
+        this.success = b;
+        this.message = userNotFound;
+    }
+
+
     public String getEmail() {
         return email;
     }

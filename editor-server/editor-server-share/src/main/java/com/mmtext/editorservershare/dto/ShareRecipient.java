@@ -14,6 +14,7 @@ public class ShareRecipient {
 
     @NotNull(message = "Permission level is required")
     private PermissionLevel permissionLevel;
+    private String permission;
 
     public String getEmail() {
         return email;
@@ -29,5 +30,13 @@ public class ShareRecipient {
 
     public void setPermissionLevel(PermissionLevel permissionLevel) {
         this.permissionLevel = permissionLevel;
+    }
+
+    public String getPermission() {
+        return permission;
+    }
+
+    public void setPermission(String permission) {
+        this.permission = permission;
     }
 }

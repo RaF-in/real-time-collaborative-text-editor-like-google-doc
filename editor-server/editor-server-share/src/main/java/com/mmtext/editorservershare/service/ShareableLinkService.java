@@ -1,5 +1,6 @@
 package com.mmtext.editorservershare.service;
 
+import com.mmtext.editorservershare.client.grpc.EditorServiceClient;
 import com.mmtext.editorservershare.dto.CreateShareableLinkDto;
 import com.mmtext.editorservershare.dto.DocumentAccessInfoResponse;
 import com.mmtext.editorservershare.dto.ShareableLinkResponse;
@@ -22,30 +23,35 @@ import java.util.stream.Collectors;
 
 
 @Service
+
 public class ShareableLinkService {
 
     private static final Logger log = LoggerFactory.getLogger(ShareableLinkService.class);
     private final ShareableLinkRepository linkRepository;
     private final DocumentPermissionRepository permissionRepository;
     private final DocumentSharingService sharingService;
+    private final EditorServiceClient editorServiceClient;
 
     private static final String LINK_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final int LINK_TOKEN_LENGTH = 32;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public ShareableLinkService(ShareableLinkRepository linkRepository, DocumentPermissionRepository permissionRepository, DocumentSharingService sharingService) {
+    public ShareableLinkService(ShareableLinkRepository linkRepository, DocumentPermissionRepository permissionRepository, DocumentSharingService sharingService, EditorServiceClient editorServiceClient) {
         this.linkRepository = linkRepository;
         this.permissionRepository = permissionRepository;
         this.sharingService = sharingService;
+        this.editorServiceClient = editorServiceClient;
     }
 
+    /**
+     * Create a shareable link
+     */
     @Transactional
     public ShareableLinkResponse createShareableLink(
             UUID documentId,
             CreateShareableLinkDto request,
             UUID currentUserId,
             String baseUrl) {
-
         log.info("Creating shareable link for document {} by user {}", documentId, currentUserId);
 
         // Verify user can share
@@ -80,6 +86,9 @@ public class ShareableLinkService {
         return mapToResponse(link, baseUrl);
     }
 
+    /**
+     * Get active shareable links for a document
+     */
     @Transactional(readOnly = true)
     public List<ShareableLinkResponse> getActiveShareableLinks(
             UUID documentId,
@@ -99,6 +108,9 @@ public class ShareableLinkService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Deactivate a shareable link
+     */
     @Transactional
     public void deactivateShareableLink(UUID linkId, UUID currentUserId) {
 
@@ -117,8 +129,11 @@ public class ShareableLinkService {
         log.info("Shareable link {} deactivated", linkId);
     }
 
+    /**
+     * Access via shareable link and return document ID for redirect
+     */
     @Transactional
-    public DocumentAccessInfoResponse accessViaShareableLink(String token, UUID userId) {
+    public UUID accessViaShareableLinkAndGetDocumentId(String token, UUID userId) {
 
         ShareableLink link = linkRepository.findByLinkToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired link"));
@@ -151,8 +166,21 @@ public class ShareableLinkService {
             }
         }
 
-        return sharingService.getDocumentAccessInfo(link.getDocumentId(), userId);
+        return link.getDocumentId();
     }
+
+    /**
+     * Access via shareable link and return full document info
+     */
+    @Transactional
+    public DocumentAccessInfoResponse accessViaShareableLink(String token, UUID userId) {
+        UUID documentId = accessViaShareableLinkAndGetDocumentId(token, userId);
+        return sharingService.getDocumentAccessInfo(documentId, userId);
+    }
+
+    // ========================================
+    // Helper Methods
+    // ========================================
 
     private String generateUniqueToken() {
         StringBuilder token = new StringBuilder(LINK_TOKEN_LENGTH);
@@ -172,7 +200,7 @@ public class ShareableLinkService {
         return ShareableLinkResponse.builder()
                 .id(link.getId())
                 .linkToken(link.getLinkToken())
-                .fullUrl(baseUrl + "/shared/" + link.getLinkToken())
+                .fullUrl(baseUrl + "/api/share/link/" + link.getLinkToken())
                 .permissionLevel(link.getPermissionLevel())
                 .createdAt(link.getCreatedAt())
                 .expiresAt(link.getExpiresAt())

@@ -9,6 +9,13 @@ public class ShareMultipleResponse {
     private Integer failureCount;
     private List<ShareResult> results;
 
+    public ShareMultipleResponse() {
+    }
+
+    public ShareMultipleResponse(String documentId, List<ShareResult> shareResults, int size, String documentSharingCompleted) {
+        this.results = shareResults;
+    }
+
     public Integer getTotalRecipients() {
         return totalRecipients;
     }
