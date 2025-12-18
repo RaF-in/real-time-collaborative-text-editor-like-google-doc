@@ -1,5 +1,5 @@
 // src/app/features/editor/components/editor-container/editor-container.component.ts
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, viewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, viewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -7,6 +7,11 @@ import { EditorStateService } from '../../services/editor-state.service';
 import { EditorContentComponent } from '../editor-content/editor-content.component';
 import { CollaboratorsPanelComponent } from '../collaborators-panel/collaborators-panel.component';
 import { EditorToolbarComponent } from '../editor-toolbar/editor-toolbar.component';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { DocumentSharingService } from '../../../../core/services/document-sharing.service';
+import { ShareDialogComponent } from '../../../sharing/components/share-dialog/share-dialog.component';
+
 
 @Component({
   selector: 'app-editor-container',
@@ -15,8 +20,9 @@ import { EditorToolbarComponent } from '../editor-toolbar/editor-toolbar.compone
     CommonModule,
     EditorToolbarComponent,
     EditorContentComponent,
-    CollaboratorsPanelComponent
-  ],
+    CollaboratorsPanelComponent,
+    MatIcon
+],
   providers: [EditorStateService],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './editor-container.component.html',
@@ -30,6 +36,12 @@ export class EditorContainerComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private isProcessingRemoteOperation = false;
+  private readonly dialog = inject(MatDialog);
+  private readonly sharingService = inject(DocumentSharingService);
+  
+  readonly documentId = signal<string>('');
+  readonly documentTitle = signal<string>('');
+  readonly canShare = signal(false);
 
   constructor(
     private route: ActivatedRoute,
@@ -39,9 +51,30 @@ export class EditorContainerComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const docId = this.route.snapshot.paramMap.get('id') || 'doc123';
     const userId = this.generateUserId();
-    
+        const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.documentId.set(id);
+      this.loadAccessInfo(id);
+    }
     this.editorState.connectToDocument(docId, userId).catch(error => {
       console.error('Connection error:', error);
+    });
+  }
+
+  private loadAccessInfo(documentId: string): void {
+    this.sharingService.getAccessInfo(documentId).subscribe(info => {
+      this.canShare.set(info.canShare);
+      // Load document title from your document service
+    });
+  }
+  
+  openShareDialog(): void {
+    this.dialog.open(ShareDialogComponent, {
+      width: '700px',
+      data: {
+        documentId: this.documentId(),
+        documentTitle: this.documentTitle()
+      }
     });
   }
   

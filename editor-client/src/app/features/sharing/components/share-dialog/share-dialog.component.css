@@ -1,0 +1,189 @@
+.dialog-content {
+  min-width: 600px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.tab-content {
+  padding: 24px 0;
+}
+
+.info-text {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.recipient-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.email-field {
+  flex: 2;
+}
+
+.permission-field {
+  flex: 1;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.add-button {
+  margin-bottom: 20px;
+}
+
+.actions {
+  margin-top: 20px;
+}
+
+.people-section {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.people-section h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.permissions-list {
+  margin-top: 16px;
+}
+
+.permission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.user-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #667eea;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.user-name {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #666;
+}
+
+.permission-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.permission-select {
+  width: 140px;
+  margin-bottom: 0;
+}
+
+.owner-badge {
+  padding: 4px 12px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.permission-badge {
+  padding: 4px 12px;
+  background: #f5f5f5;
+  color: #666;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.links-section {
+  margin-bottom: 32px;
+}
+
+.links-section h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.link-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: #fafafa;
+}
+
+.link-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+}
+
+.link-details {
+  flex: 1;
+}
+
+.link-permission {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.link-meta {
+  font-size: 12px;
+  color: #666;
+}
+
+.link-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.link-form {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.link-form h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}

@@ -57,6 +57,22 @@ export const routes: Routes = [
     loadComponent: () => import('./features/document-list/document-list.component')
       .then(m => m.DocumentListComponent)
   },
+   {
+    path: 'documents/:id/request-access',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/sharing/components/request-access/request-access.component')
+      .then(m => m.RequestAccessComponent)
+  },
+  {
+    path: 'link/:token',
+    loadComponent: () => import('./features/sharing/components/share-link-access/shared-link-access.component')
+      .then(m => m.SharedLinkAccessComponent)
+  },
+  {
+    path: 'no-access',
+    loadComponent: () => import('./features/sharing/components/no-access/no-access.component')
+      .then(m => m.NoAccessComponent)
+  },
   {
     path: '**',
     redirectTo: '/home'

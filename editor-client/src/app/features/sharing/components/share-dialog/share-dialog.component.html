@@ -1,0 +1,189 @@
+<h2 mat-dialog-title>Share "{{ data.documentTitle }}"</h2>
+
+<mat-dialog-content class="dialog-content">
+  <mat-tab-group>
+    <mat-tab label="Share with people">
+      <div class="tab-content">
+        <p class="info-text">People will receive an email invitation to access this document.</p>
+        
+        <form [formGroup]="shareForm" (ngSubmit)="shareWithMultiple()">
+          <div formArrayName="recipients">
+            @for (recipient of recipients.controls; track $index) {
+              <div class="recipient-row" [formGroupName]="$index">
+                <mat-form-field class="email-field">
+                  <mat-label>Email address</mat-label>
+                  <input matInput formControlName="email" placeholder="name@example.com">
+                  @if (recipient.get('email')?.hasError('email')) {
+                    <mat-error>Invalid email format</mat-error>
+                  }
+                </mat-form-field>
+                
+                <mat-form-field class="permission-field">
+                  <mat-label>Permission</mat-label>
+                  <mat-select formControlName="permissionLevel">
+                    @for (option of permissionOptions; track option.value) {
+                      <mat-option [value]="option.value">
+                        <mat-icon>{{ option.icon }}</mat-icon>
+                        {{ option.label }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                
+                @if (recipients.length > 1) {
+                  <button mat-icon-button type="button" (click)="removeRecipient($index)" matTooltip="Remove">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+          
+          @if (recipients.length < 50) {
+            <button mat-button type="button" (click)="addRecipient()" class="add-button">
+              <mat-icon>add</mat-icon>
+              Add another person
+            </button>
+          }
+          
+          <mat-form-field class="full-width">
+            <mat-label>Message (optional)</mat-label>
+            <textarea matInput formControlName="message" rows="3" 
+                      placeholder="Add a message to include in the email invitation"></textarea>
+            <mat-hint>This message will be included in the email invitation</mat-hint>
+          </mat-form-field>
+          
+          <div class="actions">
+            <button mat-raised-button color="primary" type="submit" 
+                    [disabled]="shareForm.invalid || isSharingMultiple()">
+              @if (isSharingMultiple()) {
+                <mat-spinner diameter="20"></mat-spinner>
+                Sending invitations...
+              } @else {
+                <mat-icon>send</mat-icon>
+                Send Invitations
+              }
+            </button>
+          </div>
+        </form>
+        
+        <div class="people-section">
+          <h3>People with access</h3>
+          @if (sharingService.permissions(); as permissions) {
+            @if (permissions.length === 0) {
+              <p class="empty-state">No one else has access yet</p>
+            } @else {
+              <div class="permissions-list">
+                @for (perm of permissions; track perm.id) {
+                  <div class="permission-item">
+                    <div class="user-info">
+                      <div class="avatar">{{ perm.userName.charAt(0).toUpperCase() }}</div>
+                      <div>
+                        <div class="user-name">{{ perm.userName }}</div>
+                        <div class="user-email">{{ perm.userEmail }}</div>
+                      </div>
+                    </div>
+                    <div class="permission-controls">
+                      @if (perm.permissionLevel === PermissionLevel.OWNER) {
+                        <span class="owner-badge">Owner</span>
+                      } @else {
+                        @if (perm.canChangePermission) {
+                          <mat-form-field class="permission-select">
+                            <mat-select [value]="perm.permissionLevel" 
+                                       (selectionChange)="changePermission(perm.userId, $event.value)">
+                              @for (option of permissionOptions; track option.value) {
+                                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                        } @else {
+                          <span class="permission-badge">{{ sharingService.getPermissionLabel(perm.permissionLevel) }}</span>
+                        }
+                        @if (perm.canRemove) {
+                          <button mat-icon-button (click)="removePermission(perm.userId, perm.userEmail)" matTooltip="Remove access">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </mat-tab>
+    
+    <mat-tab label="Get link">
+      <div class="tab-content">
+        <p class="info-text">Anyone with the link can access this document.</p>
+        
+        @if (sharingService.shareableLinks(); as links) {
+          @if (links.length > 0) {
+            <div class="links-section">
+              <h3>Active links</h3>
+              @for (link of links; track link.id) {
+                <div class="link-item">
+                  <div class="link-info">
+                    <mat-icon>link</mat-icon>
+                    <div class="link-details">
+                      <div class="link-permission">{{ sharingService.getPermissionLabel(link.permissionLevel) }}</div>
+                      @if (link.expiresAt) {
+                        <div class="link-meta">Expires: {{ link.expiresAt | date:'short' }}</div>
+                      }
+                      <div class="link-meta">{{ link.accessCount }} access{{ link.accessCount !== 1 ? 'es' : '' }}</div>
+                    </div>
+                  </div>
+                  <div class="link-actions">
+                    <button mat-stroked-button (click)="copyLink(link.fullUrl)">
+                      <mat-icon>content_copy</mat-icon>
+                      Copy link
+                    </button>
+                    <button mat-icon-button (click)="revokeLink(link.id)" matTooltip="Revoke link">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+        
+        <form [formGroup]="linkForm" (ngSubmit)="createShareableLink()" class="link-form">
+          <h3>Create new shareable link</h3>
+          
+          <mat-form-field class="full-width">
+            <mat-label>Permission level</mat-label>
+            <mat-select formControlName="permissionLevel">
+              @for (option of permissionOptions; track option.value) {
+                <mat-option [value]="option.value">
+                  <mat-icon>{{ option.icon }}</mat-icon>
+                  {{ option.label }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          
+          <mat-form-field class="full-width">
+            <mat-label>Link expiration (optional)</mat-label>
+            <input matInput type="number" formControlName="expiresInDays" placeholder="Days">
+            <mat-hint>Leave empty for no expiration</mat-hint>
+          </mat-form-field>
+          
+          <button mat-raised-button color="primary" type="submit" [disabled]="linkForm.invalid || isCreatingLink()">
+            @if (isCreatingLink()) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              Create link
+            }
+          </button>
+        </form>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Done</button>
+</mat-dialog-actions>
