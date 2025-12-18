@@ -1,5 +1,6 @@
 package com.mmtext.editorservershare.controller;
 
+import com.mmtext.editorservershare.annotation.CurrentUser;
 import com.mmtext.editorservershare.dto.*;
 import com.mmtext.editorservershare.service.AccessRequestService;
 import com.mmtext.editorservershare.service.DocumentSharingService;

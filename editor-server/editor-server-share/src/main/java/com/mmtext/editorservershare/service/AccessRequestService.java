@@ -8,6 +8,8 @@ import com.mmtext.editorservershare.domain.DocumentInfo;
 import com.mmtext.editorservershare.dto.*;
 import com.mmtext.editorservershare.enums.RequestStatus;
 import com.mmtext.editorservershare.exception.ResourceNotFoundException;
+import com.mmtext.editorservershare.enums.PermissionLevel;
+import org.springframework.security.access.AccessDeniedException;
 import com.mmtext.editorservershare.model.AccessRequest;
 import com.mmtext.editorservershare.model.DocumentPermission;
 import com.mmtext.editorservershare.repo.AccessRequestRepository;
@@ -67,7 +69,7 @@ public class AccessRequestService {
         }
 
         DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
-        if (!documentInfo.getAllowAccessRequests()) {
+        if (!documentInfo.isAllowAccessRequests()) {
             throw new IllegalArgumentException("This document doesn't accept access requests");
         }
 
@@ -76,13 +78,14 @@ public class AccessRequestService {
             throw new IllegalArgumentException("You already have a pending request");
         }
 
-        var requesterInfo = authServiceClient.getUserById(currentUserId);
+        var requesterInfo = authServiceClient.getUserById(currentUserId.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
 
         AccessRequest accessRequest = AccessRequest.builder()
                 .documentId(documentId)
                 .requesterId(currentUserId)
                 .requesterEmail(requesterInfo.getEmail())
-                .requesterName(requesterInfo.getName())
+                .requesterName(requesterInfo.getFullName())
                 .requestedPermission(request.getRequestedPermission())
                 .message(request.getMessage())
                 .status(RequestStatus.PENDING)
@@ -92,16 +95,17 @@ public class AccessRequestService {
 
         // Generate approval token
         String token = generateToken();
-        approvalTokens.put(accessRequest.getId(), token);
+        approvalTokens.put(accessRequest.getId().toString(), token);
 
         // Send email to owner
-        var ownerInfo = authServiceClient.getUserById(UUID.fromString(documentInfo.getOwnerId()));
+        var ownerInfo = authServiceClient.getUserById(documentInfo.getOwnerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found: " + documentInfo.getOwnerId()));
         emailService.sendAccessRequestEmail(
                 ownerInfo.getEmail(),
-                ownerInfo.getName(),
+                ownerInfo.getFullName(),
                 documentId,
                 documentInfo.getTitle(),
-                requesterInfo.getName(),
+                requesterInfo.getFullName(),
                 requesterInfo.getEmail(),
                 request.getRequestedPermission(),
                 request.getMessage(),
@@ -140,7 +144,7 @@ public class AccessRequestService {
         accessRequestRepository.save(request);
 
         // Send approval email
-        var documentInfo = editorServiceClient.getDocumentInfo(request.getDocumentId());
+        var documentInfo = editorServiceClient.getDocumentInfo(request.getDocumentId().toString());
         emailService.sendAccessApprovedEmail(
                 request.getRequesterEmail(),
                 request.getRequesterName(),
@@ -149,7 +153,7 @@ public class AccessRequestService {
                 request.getRequestedPermission()
         );
 
-        approvalTokens.remove(requestId);
+        approvalTokens.remove(requestId.toString());
         log.info("Access request {} approved via email", requestId);
     }
 
@@ -164,21 +168,21 @@ public class AccessRequestService {
         accessRequestRepository.save(request);
 
         // Send rejection email
-        var documentInfo = editorServiceClient.getDocumentInfo(request.getDocumentId());
+        var documentInfo = editorServiceClient.getDocumentInfo(request.getDocumentId().toString());
         emailService.sendAccessRejectedEmail(
                 request.getRequesterEmail(),
                 request.getRequesterName(),
                 documentInfo.getTitle()
         );
 
-        approvalTokens.remove(requestId);
+        approvalTokens.remove(requestId.toString());
         log.info("Access request {} rejected via email", requestId);
     }
 
     public List<AccessRequestResponse> getPendingAccessRequests(UUID documentId, UUID currentUserId) {
         // Verify owner
         if (!permissionRepository.existsByDocumentIdAndUserIdAndPermissionLevel(
-                documentId, currentUserId, DocumentPermission.PermissionLevel.OWNER)) {
+                documentId, currentUserId, PermissionLevel.OWNER)) {
             throw new AccessDeniedException("Only owner can view access requests");
         }
 

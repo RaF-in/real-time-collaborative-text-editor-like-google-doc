@@ -2,7 +2,7 @@ package com.mmtext.authserver.grpc;
 
 import com.google.protobuf.Timestamp;
 import com.mmtext.auth.grpc.AuthServiceGrpc;
-import com.mmtext.auth.grpc.*;
+import com.mmtext.auth.grpc.AuthServiceProto;
 import com.mmtext.common.grpc.CommonProto;
 import com.mmtext.authserver.model.User;
 import com.mmtext.authserver.service.UserService;
@@ -38,13 +38,13 @@ public class AuthServiceGrpcImpl extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
-    public void getUserById(GetUserByIdRequest request, StreamObserver<GetUserByIdResponse> responseObserver) {
+    public void getUserById(AuthServiceProto.GetUserByIdRequest request, StreamObserver<AuthServiceProto.GetUserByIdResponse> responseObserver) {
         try {
             log.debug("Getting user by ID: {}", request.getUserId());
 
             Optional<User> userOpt = userService.getUserById(UUID.fromString(request.getUserId()));
 
-            GetUserByIdResponse.Builder responseBuilder = GetUserByIdResponse.newBuilder();
+            AuthServiceProto.GetUserByIdResponse.Builder responseBuilder = AuthServiceProto.GetUserByIdResponse.newBuilder();
 
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
@@ -69,13 +69,13 @@ public class AuthServiceGrpcImpl extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
-    public void getUserByEmail(GetUserByEmailRequest request, StreamObserver<GetUserByEmailResponse> responseObserver) {
+    public void getUserByEmail(AuthServiceProto.GetUserByEmailRequest request, StreamObserver<AuthServiceProto.GetUserByEmailResponse> responseObserver) {
         try {
             log.debug("Getting user by email: {}", request.getEmail());
 
             Optional<User> userOpt = userService.getUserByEmail(request.getEmail());
 
-            GetUserByEmailResponse.Builder responseBuilder = GetUserByEmailResponse.newBuilder();
+            AuthServiceProto.GetUserByEmailResponse.Builder responseBuilder = AuthServiceProto.GetUserByEmailResponse.newBuilder();
 
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
@@ -100,11 +100,11 @@ public class AuthServiceGrpcImpl extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
-    public void getUsersByIds(GetUsersByIdsRequest request, StreamObserver<GetUsersByIdsResponse> responseObserver) {
+    public void getUsersByIds(AuthServiceProto.GetUsersByIdsRequest request, StreamObserver<AuthServiceProto.GetUsersByIdsResponse> responseObserver) {
         try {
             log.debug("Getting {} users by IDs", request.getUserIdsCount());
 
-            GetUsersByIdsResponse.Builder responseBuilder = GetUsersByIdsResponse.newBuilder();
+            AuthServiceProto.GetUsersByIdsResponse.Builder responseBuilder = AuthServiceProto.GetUsersByIdsResponse.newBuilder();
             List<String> errors = new ArrayList<>();
 
             for (String userId : request.getUserIdsList()) {
@@ -146,7 +146,7 @@ public class AuthServiceGrpcImpl extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
-    public void searchUsers(SearchUsersRequest request, StreamObserver<SearchUsersResponse> responseObserver) {
+    public void searchUsers(AuthServiceProto.SearchUsersRequest request, StreamObserver<AuthServiceProto.SearchUsersResponse> responseObserver) {
         try {
             log.debug("Searching users with pattern: {}", request.getEmailPattern());
 
@@ -167,7 +167,7 @@ public class AuthServiceGrpcImpl extends AuthServiceGrpc.AuthServiceImplBase {
                     .limit(limit)
                     .collect(Collectors.toList());
 
-            SearchUsersResponse.Builder responseBuilder = SearchUsersResponse.newBuilder()
+            AuthServiceProto.SearchUsersResponse.Builder responseBuilder = AuthServiceProto.SearchUsersResponse.newBuilder()
                     .setTotalCount(total);
 
             for (User user : paginatedUsers) {
@@ -186,13 +186,13 @@ public class AuthServiceGrpcImpl extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
-    public void validateUser(ValidateUserRequest request, StreamObserver<ValidateUserResponse> responseObserver) {
+    public void validateUser(AuthServiceProto.ValidateUserRequest request, StreamObserver<AuthServiceProto.ValidateUserResponse> responseObserver) {
         try {
             log.debug("Validating user: {}", request.getUserId());
 
             Optional<User> userOpt = userService.getUserById(UUID.fromString(request.getUserId()));
 
-            ValidateUserResponse.Builder responseBuilder = ValidateUserResponse.newBuilder()
+            AuthServiceProto.ValidateUserResponse.Builder responseBuilder = AuthServiceProto.ValidateUserResponse.newBuilder()
                     .setValid(false);
 
             if (userOpt.isPresent()) {

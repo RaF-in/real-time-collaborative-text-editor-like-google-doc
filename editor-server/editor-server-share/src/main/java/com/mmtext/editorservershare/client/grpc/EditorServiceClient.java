@@ -3,8 +3,9 @@ package com.mmtext.editorservershare.client.grpc;
 import com.google.protobuf.Timestamp;
 import com.mmtext.common.grpc.CommonProto;
 import com.mmtext.editorservershare.domain.Document;
+import com.mmtext.editorservershare.domain.DocumentInfo;
 import com.mmtext.editor.grpc.EditorServiceGrpc;
-import com.mmtext.editor.grpc.*;
+import com.mmtext.editor.grpc.EditorServiceProto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.grpc.ManagedChannel;
@@ -42,12 +43,12 @@ public class EditorServiceClient {
         try {
             EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
 
-            GetDocumentRequest request = GetDocumentRequest.newBuilder()
+            EditorServiceProto.GetDocumentRequest request = EditorServiceProto.GetDocumentRequest.newBuilder()
                     .setDocumentId(documentId)
                     .setRequestorId(requestorId)
                     .build();
 
-            GetDocumentResponse response = stub.getDocument(request);
+            EditorServiceProto.GetDocumentResponse response = stub.getDocument(request);
 
             if (response.hasDocument()) {
                 return Optional.of(convertGrpcDocumentToDomain(response.getDocument()));
@@ -73,11 +74,11 @@ public class EditorServiceClient {
         try {
             EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
 
-            GetDocumentInfoRequest request = GetDocumentInfoRequest.newBuilder()
+            EditorServiceProto.GetDocumentInfoRequest request = EditorServiceProto.GetDocumentInfoRequest.newBuilder()
                     .setDocumentId(documentId)
                     .build();
 
-            GetDocumentInfoResponse response = stub.getDocumentInfo(request);
+            EditorServiceProto.GetDocumentInfoResponse response = stub.getDocumentInfo(request);
 
             if (response.hasDocumentInfo()) {
                 EditorServiceProto.DocumentInfo grpcDocInfo = response.getDocumentInfo();
@@ -113,11 +114,11 @@ public class EditorServiceClient {
         try {
             EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
 
-            DocumentExistsRequest request = DocumentExistsRequest.newBuilder()
+            EditorServiceProto.DocumentExistsRequest request = EditorServiceProto.DocumentExistsRequest.newBuilder()
                     .setDocumentId(documentId)
                     .build();
 
-            DocumentExistsResponse response = stub.documentExists(request);
+            EditorServiceProto.DocumentExistsResponse response = stub.documentExists(request);
             return response.getExists();
         } catch (StatusRuntimeException e) {
             log.error("Failed to check document existence: {}", documentId, e);
@@ -134,15 +135,15 @@ public class EditorServiceClient {
         try {
             EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
 
-            GetDocumentWithAccessRequest request = GetDocumentWithAccessRequest.newBuilder()
+            EditorServiceProto.GetDocumentWithAccessRequest request = EditorServiceProto.GetDocumentWithAccessRequest.newBuilder()
                     .setDocumentId(documentId)
                     .setRequestorId(requestorId)
                     .build();
 
-            GetDocumentWithAccessResponse response = stub.getDocumentWithAccess(request);
+            EditorServiceProto.GetDocumentWithAccessResponse response = stub.getDocumentWithAccess(request);
 
             if (response.hasDocument()) {
-                DocumentWithAccess grpcDoc = response.getDocument();
+                EditorServiceProto.DocumentWithAccess grpcDoc = response.getDocument();
                 return Optional.of(
                     new DocumentWithAccess(
                         convertGrpcDocumentToDomain(grpcDoc.getDocument()),
@@ -173,7 +174,7 @@ public class EditorServiceClient {
         try {
             EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
 
-            UpdateSharingSettingsRequest request = UpdateSharingSettingsRequest.newBuilder()
+            EditorServiceProto.UpdateSharingSettingsRequest request = EditorServiceProto.UpdateSharingSettingsRequest.newBuilder()
                     .setDocumentId(documentId)
                     .setOwnerId(ownerId)
                     .setAllowAccessRequests(allowAccessRequests)
@@ -201,12 +202,12 @@ public class EditorServiceClient {
         try {
             EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
 
-            GetDocumentsByIdsRequest request = GetDocumentsByIdsRequest.newBuilder()
+            EditorServiceProto.GetDocumentsByIdsRequest request = EditorServiceProto.GetDocumentsByIdsRequest.newBuilder()
                     .addAllDocumentIds(documentIds)
                     .setRequestorId(requestorId)
                     .build();
 
-            GetDocumentsByIdsResponse response = stub.getDocumentsByIds(request);
+            EditorServiceProto.GetDocumentsByIdsResponse response = stub.getDocumentsByIds(request);
 
             Map<String, Document> result = new HashMap<>();
             response.getDocumentsList().forEach(grpcDoc -> {

@@ -13,6 +13,9 @@ service EditorService {
   // Get document information
   rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
 
+  // Get document basic info
+  rpc GetDocumentInfo(GetDocumentInfoRequest) returns (GetDocumentInfoResponse);
+
   // Check if document exists
   rpc DocumentExists(DocumentExistsRequest) returns (DocumentExistsResponse);
 
@@ -39,6 +42,27 @@ message GetDocumentResponse {
     com.mmtext.common.Document document = 1;
     string error = 2;
   }
+}
+
+message GetDocumentInfoRequest {
+  string document_id = 1;
+}
+
+message GetDocumentInfoResponse {
+  oneof result {
+    DocumentInfo document_info = 1;
+    string error = 2;
+  }
+}
+
+message DocumentInfo {
+  string id = 1;
+  string doc_id = 2;
+  string title = 3;
+  string owner_id = 4;
+  bool allow_access_requests = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 }
 
 message DocumentExistsRequest {

@@ -108,6 +108,10 @@ public class ShareableLink {
         this.createdBy = createdBy;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -146,5 +150,83 @@ public class ShareableLink {
 
     public void setLastAccessedAt(Instant lastAccessedAt) {
         this.lastAccessedAt = lastAccessedAt;
+    }
+
+    public static class Builder {
+        private UUID id;
+        private UUID documentId;
+        private String linkToken;
+        private PermissionLevel permissionLevel;
+        private UUID createdBy;
+        private Instant createdAt;
+        private Instant expiresAt;
+        private Boolean isActive = true;
+        private Integer accessCount = 0;
+        private Instant lastAccessedAt;
+
+        public Builder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder documentId(UUID documentId) {
+            this.documentId = documentId;
+            return this;
+        }
+
+        public Builder linkToken(String linkToken) {
+            this.linkToken = linkToken;
+            return this;
+        }
+
+        public Builder permissionLevel(PermissionLevel permissionLevel) {
+            this.permissionLevel = permissionLevel;
+            return this;
+        }
+
+        public Builder createdBy(UUID createdBy) {
+            this.createdBy = createdBy;
+            return this;
+        }
+
+        public Builder createdAt(Instant createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder expiresAt(Instant expiresAt) {
+            this.expiresAt = expiresAt;
+            return this;
+        }
+
+        public Builder isActive(Boolean isActive) {
+            this.isActive = isActive;
+            return this;
+        }
+
+        public Builder accessCount(Integer accessCount) {
+            this.accessCount = accessCount;
+            return this;
+        }
+
+        public Builder lastAccessedAt(Instant lastAccessedAt) {
+            this.lastAccessedAt = lastAccessedAt;
+            return this;
+        }
+
+        public ShareableLink build() {
+            ShareableLink link = new ShareableLink();
+            link.id = this.id;
+            link.documentId = this.documentId;
+            link.linkToken = this.linkToken;
+            link.permissionLevel = this.permissionLevel;
+            link.createdBy = this.createdBy;
+            link.createdAt = this.createdAt;
+            link.expiresAt = this.expiresAt;
+            link.isActive = this.isActive;
+            link.accessCount = this.accessCount;
+            link.lastAccessedAt = this.lastAccessedAt;
+            return link;
+        }
     }
 }

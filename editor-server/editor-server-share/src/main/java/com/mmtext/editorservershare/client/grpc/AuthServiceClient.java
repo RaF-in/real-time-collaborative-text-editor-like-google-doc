@@ -2,7 +2,7 @@ package com.mmtext.editorservershare.client.grpc;
 
 import com.google.protobuf.Timestamp;
 import com.mmtext.auth.grpc.AuthServiceGrpc;
-import com.mmtext.auth.grpc.*;
+import com.mmtext.auth.grpc.AuthServiceProto;
 import com.mmtext.common.grpc.CommonProto;
 import com.mmtext.editorservershare.domain.User;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -43,11 +43,11 @@ public class AuthServiceClient {
         try {
             AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
 
-            GetUserByIdRequest request = GetUserByIdRequest.newBuilder()
+            AuthServiceProto.GetUserByIdRequest request = AuthServiceProto.GetUserByIdRequest.newBuilder()
                     .setUserId(userId)
                     .build();
 
-            GetUserByIdResponse response = stub.getUserById(request);
+            AuthServiceProto.GetUserByIdResponse response = stub.getUserById(request);
 
             if (response.hasUser()) {
                 return Optional.of(convertGrpcUserToDomain(response.getUser()));
@@ -73,11 +73,11 @@ public class AuthServiceClient {
         try {
             AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
 
-            GetUserByEmailRequest request = GetUserByEmailRequest.newBuilder()
+            AuthServiceProto.GetUserByEmailRequest request = AuthServiceProto.GetUserByEmailRequest.newBuilder()
                     .setEmail(email)
                     .build();
 
-            GetUserByEmailResponse response = stub.getUserByEmail(request);
+            AuthServiceProto.GetUserByEmailResponse response = stub.getUserByEmail(request);
 
             if (response.hasUser()) {
                 return Optional.of(convertGrpcUserToDomain(response.getUser()));
@@ -107,11 +107,11 @@ public class AuthServiceClient {
         try {
             AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
 
-            GetUsersByIdsRequest request = GetUsersByIdsRequest.newBuilder()
+            AuthServiceProto.GetUsersByIdsRequest request = AuthServiceProto.GetUsersByIdsRequest.newBuilder()
                     .addAllUserIds(userIds)
                     .build();
 
-            GetUsersByIdsResponse response = stub.getUsersByIds(request);
+            AuthServiceProto.GetUsersByIdsResponse response = stub.getUsersByIds(request);
 
             Map<String, User> result = new HashMap<>();
             response.getUsersList().forEach(grpcUser -> {
@@ -142,13 +142,13 @@ public class AuthServiceClient {
         try {
             AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
 
-            SearchUsersRequest request = SearchUsersRequest.newBuilder()
+            AuthServiceProto.SearchUsersRequest request = AuthServiceProto.SearchUsersRequest.newBuilder()
                     .setEmailPattern(emailPattern)
                     .setLimit(limit)
                     .setOffset(offset)
                     .build();
 
-            SearchUsersResponse response = stub.searchUsers(request);
+            AuthServiceProto.SearchUsersResponse response = stub.searchUsers(request);
 
             return response.getUsersList().stream()
                     .map(this::convertGrpcUserToDomain)
@@ -168,11 +168,11 @@ public class AuthServiceClient {
         try {
             AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
 
-            ValidateUserRequest request = ValidateUserRequest.newBuilder()
+            AuthServiceProto.ValidateUserRequest request = AuthServiceProto.ValidateUserRequest.newBuilder()
                     .setUserId(userId)
                     .build();
 
-            ValidateUserResponse response = stub.validateUser(request);
+            AuthServiceProto.ValidateUserResponse response = stub.validateUser(request);
             return response.getValid();
         } catch (StatusRuntimeException e) {
             log.error("Failed to validate user: {}", userId, e);

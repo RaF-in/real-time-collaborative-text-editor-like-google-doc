@@ -87,4 +87,79 @@ public class DocumentPermissionResponse {
     public void setCanChangePermission(Boolean canChangePermission) {
         this.canChangePermission = canChangePermission;
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private UUID id;
+        private UUID userId;
+        private String userEmail;
+        private String userName;
+        private String userAvatarUrl;
+        private PermissionLevel permissionLevel;
+        private Instant grantedAt;
+        private Boolean canRemove;
+        private Boolean canChangePermission;
+
+        public Builder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder userId(UUID userId) {
+            this.userId = userId;
+            return this;
+        }
+
+        public Builder userEmail(String userEmail) {
+            this.userEmail = userEmail;
+            return this;
+        }
+
+        public Builder userName(String userName) {
+            this.userName = userName;
+            return this;
+        }
+
+        public Builder userAvatarUrl(String userAvatarUrl) {
+            this.userAvatarUrl = userAvatarUrl;
+            return this;
+        }
+
+        public Builder permissionLevel(PermissionLevel permissionLevel) {
+            this.permissionLevel = permissionLevel;
+            return this;
+        }
+
+        public Builder grantedAt(Instant grantedAt) {
+            this.grantedAt = grantedAt;
+            return this;
+        }
+
+        public Builder canRemove(Boolean canRemove) {
+            this.canRemove = canRemove;
+            return this;
+        }
+
+        public Builder canChangePermission(Boolean canChangePermission) {
+            this.canChangePermission = canChangePermission;
+            return this;
+        }
+
+        public DocumentPermissionResponse build() {
+            DocumentPermissionResponse response = new DocumentPermissionResponse();
+            response.id = this.id;
+            response.userId = this.userId;
+            response.userEmail = this.userEmail;
+            response.userName = this.userName;
+            response.userAvatarUrl = this.userAvatarUrl;
+            response.permissionLevel = this.permissionLevel;
+            response.grantedAt = this.grantedAt;
+            response.canRemove = this.canRemove;
+            response.canChangePermission = this.canChangePermission;
+            return response;
+        }
+    }
 }

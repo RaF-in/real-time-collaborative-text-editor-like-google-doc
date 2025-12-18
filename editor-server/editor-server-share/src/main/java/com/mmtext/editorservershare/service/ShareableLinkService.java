@@ -204,7 +204,7 @@ public class ShareableLinkService {
                 .permissionLevel(link.getPermissionLevel())
                 .createdAt(link.getCreatedAt())
                 .expiresAt(link.getExpiresAt())
-                .isActive(link.getIsActive())
+                .isActive(link.getActive())
                 .accessCount(link.getAccessCount())
                 .lastAccessedAt(link.getLastAccessedAt())
                 .build();

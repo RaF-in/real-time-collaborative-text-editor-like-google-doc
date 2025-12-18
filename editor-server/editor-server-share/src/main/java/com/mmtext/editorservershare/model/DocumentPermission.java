@@ -145,6 +145,7 @@ public class DocumentPermission {
         private String userName;
         private String userAvatarUrl;
         private PermissionLevel permissionLevel;
+        private UUID grantedBy;
 
         public Builder documentId(UUID documentId) {
             this.documentId = documentId;
@@ -176,6 +177,11 @@ public class DocumentPermission {
             return this;
         }
 
+        public Builder grantedBy(UUID grantedBy) {
+            this.grantedBy = grantedBy;
+            return this;
+        }
+
         public DocumentPermission build() {
             DocumentPermission permission = new DocumentPermission();
             permission.documentId = this.documentId;
@@ -184,6 +190,7 @@ public class DocumentPermission {
             permission.userName = this.userName;
             permission.userAvatarUrl = this.userAvatarUrl;
             permission.permissionLevel = this.permissionLevel;
+            permission.grantedBy = this.grantedBy;
             return permission;
         }
     }

@@ -92,6 +92,13 @@
             <version>${grpc.version}</version>
         </dependency>
 
+        <!-- javax.annotation for Generated annotation -->
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+
         <!-- Resilience4j for Circuit Breaker and Retry -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>

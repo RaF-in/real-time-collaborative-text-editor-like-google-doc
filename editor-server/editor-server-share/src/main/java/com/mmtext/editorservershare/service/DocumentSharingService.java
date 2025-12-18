@@ -3,6 +3,7 @@ package com.mmtext.editorservershare.service;
 import com.mmtext.editorservershare.client.grpc.AuthServiceClient;
 import com.mmtext.editorservershare.client.grpc.EditorServiceClient;
 import com.mmtext.editorservershare.domain.DocumentInfo;
+import com.mmtext.editorservershare.domain.User;
 import com.mmtext.editorservershare.dto.*;
 import com.mmtext.editorservershare.enums.PermissionLevel;
 import com.mmtext.editorservershare.exception.AccessDeniedException;
@@ -52,10 +53,11 @@ public class DocumentSharingService {
         validateCanShare(documentId, currentUserId);
 
         // Get document info
-        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId);
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
 
         // Get sharer info
-        AuthServiceClient.UserInfo sharerInfo = authServiceClient.getUserById(currentUserId);
+        User sharerInfo = authServiceClient.getUserById(currentUserId.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
 
         List<ShareResult> results = new ArrayList<>();
         int successCount = 0;
@@ -64,7 +66,8 @@ public class DocumentSharingService {
         for (ShareRecipient recipient : request.getRecipients()) {
             try {
                 // Validate user exists
-                AuthServiceClient.UserInfo targetUser = authServiceClient.getUserByEmail(recipient.getEmail());
+                User targetUser = authServiceClient.getUserByEmail(recipient.getEmail())
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found: " + recipient.getEmail()));
 
                 if (targetUser.getId().equals(currentUserId)) {
                     results.add(createFailureResult(recipient.getEmail(),
@@ -113,11 +116,11 @@ public class DocumentSharingService {
                 // Send email invitation
                 emailService.sendDocumentSharedEmail(
                         targetUser.getEmail(),
-                        targetUser.getName(),
+                        targetUser.getFullName(),
                         documentId,
                         documentInfo.getTitle(),
                         recipient.getPermissionLevel(),
-                        sharerInfo.getName(),
+                        sharerInfo.getFullName(),
                         request.getMessage()
                 );
 
@@ -126,7 +129,7 @@ public class DocumentSharingService {
                         permission, currentUserId, documentId, targetUser
                 );
 
-                results.add(ShareMultipleResponse.ShareResult.builder()
+                results.add(ShareResult.builder()
                         .email(recipient.getEmail())
                         .success(true)
                         .message(isNew ? "Access granted" : "Permission updated")
@@ -170,7 +173,8 @@ public class DocumentSharingService {
         return permissions.stream()
                 .map(permission -> {
                     try {
-                        AuthServiceClient.UserInfo userInfo = authServiceClient.getUserById(permission.getUserId());
+                        User userInfo = authServiceClient.getUserById(permission.getUserId().toString())
+                        .orElse(null);
                         return mapToPermissionResponse(permission, currentUserId, documentId, userInfo);
                     } catch (Exception e) {
                         log.warn("Failed to fetch user info for {}: {}", permission.getUserId(), e.getMessage());
@@ -222,7 +226,8 @@ public class DocumentSharingService {
                 oldLevel, request.getPermissionLevel(), httpRequest);
 
         // Get user info for response
-        AuthServiceClient.UserInfo userInfo = authServiceClient.getUserById(request.getUserId());
+        User userInfo = authServiceClient.getUserById(request.getUserId().toString())
+                .orElse(null);
 
         log.info("Permission updated successfully for user {} on document {}",
                 request.getUserId(), documentId);
@@ -283,13 +288,14 @@ public class DocumentSharingService {
             UUID currentUserId) {
 
         // Get document info
-        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId);
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
 
         // Get user's permission
         PermissionLevel permissionLevel = getPermissionLevel(documentId, currentUserId);
 
         // Get owner info
-        AuthServiceClient.UserInfo ownerInfo = authServiceClient.getUserById(documentInfo.getOwnerId());
+        User ownerInfo = authServiceClient.getUserById(documentInfo.getOwnerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found: " + documentInfo.getOwnerId()));
 
         return DocumentAccessInfoResponse.builder()
                 .documentId(documentId)
@@ -298,10 +304,10 @@ public class DocumentSharingService {
                 .canEdit(permissionLevel != null && permissionLevel.canEdit())
                 .canShare(permissionLevel != null && permissionLevel.canShare())
                 .canManagePermissions(permissionLevel != null && permissionLevel.canManagePermissions())
-                .canRequestAccess(permissionLevel == null && documentInfo.getAllowAccessRequests())
-                .ownerId(documentInfo.getOwnerId())
+                .canRequestAccess(permissionLevel == null && documentInfo.isAllowAccessRequests())
+                .ownerId(UUID.fromString(documentInfo.getOwnerId()))
                 .ownerEmail(ownerInfo.getEmail())
-                .ownerName(ownerInfo.getName())
+                .ownerName(ownerInfo.getFullName())
                 .build();
     }
 
@@ -346,7 +352,7 @@ public class DocumentSharingService {
             DocumentPermission permission,
             UUID currentUserId,
             UUID documentId,
-            AuthServiceClient.UserInfo userInfo) {
+            User userInfo) {
 
         PermissionLevel currentUserLevel = getPermissionLevel(documentId, currentUserId);
 
@@ -357,7 +363,7 @@ public class DocumentSharingService {
 
         boolean canChange = canRemove;
 
-        DocumentPermissionResponse.DocumentPermissionResponseBuilder builder = DocumentPermissionResponse.builder()
+        DocumentPermissionResponse.Builder builder = DocumentPermissionResponse.builder()
                 .id(permission.getId())
                 .userId(permission.getUserId())
                 .permissionLevel(permission.getPermissionLevel())
@@ -368,7 +374,7 @@ public class DocumentSharingService {
         if (userInfo != null) {
             builder
                     .userEmail(userInfo.getEmail())
-                    .userName(userInfo.getName())
+                    .userName(userInfo.getFullName())
                     .userAvatarUrl(userInfo.getAvatarUrl());
         }
 

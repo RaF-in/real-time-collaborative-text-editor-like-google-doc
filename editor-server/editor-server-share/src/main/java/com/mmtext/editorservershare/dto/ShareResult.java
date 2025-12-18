@@ -12,6 +12,10 @@ public class ShareResult {
         this.message = userNotFound;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
 
     public String getEmail() {
         return email;
@@ -43,5 +47,38 @@ public class ShareResult {
 
     public void setPermission(DocumentPermissionResponse permission) {
         this.permission = permission;
+    }
+
+    public static class Builder {
+        private String email;
+        private Boolean success;
+        private String message;
+        private DocumentPermissionResponse permission;
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder success(Boolean success) {
+            this.success = success;
+            return this;
+        }
+
+        public Builder message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public Builder permission(DocumentPermissionResponse permission) {
+            this.permission = permission;
+            return this;
+        }
+
+        public ShareResult build() {
+            ShareResult result = new ShareResult(email, success != null ? success : false, message);
+            result.permission = this.permission;
+            return result;
+        }
     }
 }

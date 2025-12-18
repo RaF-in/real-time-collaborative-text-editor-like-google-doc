@@ -2,7 +2,8 @@ package com.mmtext.editorserversnapshot.grpc;
 
 import com.google.protobuf.Timestamp;
 import com.mmtext.common.grpc.CommonProto;
-import com.mmtext.editor.grpc.*;
+import com.mmtext.editor.grpc.EditorServiceGrpc;
+import com.mmtext.editor.grpc.EditorServiceProto;
 import com.mmtext.editorserversnapshot.model.Document;
 import com.mmtext.editorserversnapshot.service.DocumentService;
 import io.grpc.Status;
@@ -36,13 +37,13 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
     }
 
     @Override
-    public void getDocument(GetDocumentRequest request, StreamObserver<GetDocumentResponse> responseObserver) {
+    public void getDocument(EditorServiceProto.GetDocumentRequest request, StreamObserver<EditorServiceProto.GetDocumentResponse> responseObserver) {
         try {
             log.debug("Getting document {} for user {}", request.getDocumentId(), request.getRequestorId());
 
             Optional<Document> documentOpt = documentService.getDocumentByDocId(request.getDocumentId());
 
-            GetDocumentResponse.Builder responseBuilder = GetDocumentResponse.newBuilder();
+            EditorServiceProto.GetDocumentResponse.Builder responseBuilder = EditorServiceProto.GetDocumentResponse.newBuilder();
 
             if (documentOpt.isPresent()) {
                 Document document = documentOpt.get();
@@ -65,13 +66,13 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
     }
 
     @Override
-    public void getDocumentInfo(GetDocumentInfoRequest request, StreamObserver<GetDocumentInfoResponse> responseObserver) {
+    public void getDocumentInfo(EditorServiceProto.GetDocumentInfoRequest request, StreamObserver<EditorServiceProto.GetDocumentInfoResponse> responseObserver) {
         try {
             log.debug("Getting document info for: {}", request.getDocumentId());
 
             Optional<Document> documentOpt = documentService.getDocumentByDocId(request.getDocumentId());
 
-            GetDocumentInfoResponse.Builder responseBuilder = GetDocumentInfoResponse.newBuilder();
+            EditorServiceProto.GetDocumentInfoResponse.Builder responseBuilder = EditorServiceProto.GetDocumentInfoResponse.newBuilder();
 
             if (documentOpt.isPresent()) {
                 Document document = documentOpt.get();
@@ -102,13 +103,13 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
     }
 
     @Override
-    public void documentExists(DocumentExistsRequest request, StreamObserver<DocumentExistsResponse> responseObserver) {
+    public void documentExists(EditorServiceProto.DocumentExistsRequest request, StreamObserver<EditorServiceProto.DocumentExistsResponse> responseObserver) {
         try {
             log.debug("Checking if document exists: {}", request.getDocumentId());
 
             boolean exists = documentService.documentExists(request.getDocumentId());
 
-            DocumentExistsResponse response = DocumentExistsResponse.newBuilder()
+            EditorServiceProto.DocumentExistsResponse response = EditorServiceProto.DocumentExistsResponse.newBuilder()
                     .setExists(exists)
                     .setDocumentId(request.getDocumentId())
                     .build();
@@ -124,14 +125,14 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
     }
 
     @Override
-    public void getDocumentWithAccess(GetDocumentWithAccessRequest request, StreamObserver<GetDocumentWithAccessResponse> responseObserver) {
+    public void getDocumentWithAccess(EditorServiceProto.GetDocumentWithAccessRequest request, StreamObserver<EditorServiceProto.GetDocumentWithAccessResponse> responseObserver) {
         try {
             log.debug("Getting document {} with access info for user {}",
                     request.getDocumentId(), request.getRequestorId());
 
             Optional<Document> documentOpt = documentService.getDocumentByDocId(request.getDocumentId());
 
-            GetDocumentWithAccessResponse.Builder responseBuilder = GetDocumentWithAccessResponse.newBuilder();
+            EditorServiceProto.GetDocumentWithAccessResponse.Builder responseBuilder = EditorServiceProto.GetDocumentWithAccessResponse.newBuilder();
 
             if (documentOpt.isPresent()) {
                 Document document = documentOpt.get();
@@ -155,7 +156,7 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
                 }
 
                 CommonProto.Document grpcDoc = convertDocumentToGrpc(document);
-                DocumentWithAccess docWithAccess = DocumentWithAccess.newBuilder()
+                EditorServiceProto.DocumentWithAccess docWithAccess = EditorServiceProto.DocumentWithAccess.newBuilder()
                         .setDocument(grpcDoc)
                         .setPermissionLevel(permissionLevel)
                         .setCanShare(canShare)
@@ -179,7 +180,7 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
     }
 
     @Override
-    public void updateSharingSettings(UpdateSharingSettingsRequest request, StreamObserver<CommonProto.Response> responseObserver) {
+    public void updateSharingSettings(EditorServiceProto.UpdateSharingSettingsRequest request, StreamObserver<CommonProto.Response> responseObserver) {
         try {
             log.info("Updating sharing settings for document {} by user {}",
                     request.getDocumentId(), request.getUpdatedBy());
@@ -231,12 +232,12 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
     }
 
     @Override
-    public void getDocumentsByIds(GetDocumentsByIdsRequest request, StreamObserver<GetDocumentsByIdsResponse> responseObserver) {
+    public void getDocumentsByIds(EditorServiceProto.GetDocumentsByIdsRequest request, StreamObserver<EditorServiceProto.GetDocumentsByIdsResponse> responseObserver) {
         try {
             log.debug("Getting {} documents for user {}",
                     request.getDocumentIdsCount(), request.getRequestorId());
 
-            GetDocumentsByIdsResponse.Builder responseBuilder = GetDocumentsByIdsResponse.newBuilder();
+            EditorServiceProto.GetDocumentsByIdsResponse.Builder responseBuilder = EditorServiceProto.GetDocumentsByIdsResponse.newBuilder();
 
             for (String docId : request.getDocumentIdsList()) {
                 try {
@@ -266,25 +267,12 @@ public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBa
     }
 
     @Override
-    public StreamObserver<DocumentUpdate> streamDocumentUpdates(StreamObserver<DocumentUpdate> responseObserver) {
+    public void streamDocumentUpdates(EditorServiceProto.StreamDocumentUpdatesRequest request, StreamObserver<EditorServiceProto.DocumentUpdate> responseObserver) {
         // This is a placeholder for future implementation of real-time document updates
-        return new StreamObserver<DocumentUpdate>() {
-            @Override
-            public void onNext(DocumentUpdate value) {
-                // Handle incoming update requests
-                log.debug("Received document update: {}", value.getDocumentId());
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                log.error("Error in document update stream", t);
-            }
-
-            @Override
-            public void onCompleted() {
-                log.debug("Document update stream completed");
-            }
-        };
+        responseObserver.onNext(EditorServiceProto.DocumentUpdate.newBuilder()
+                .setDocumentId("placeholder")
+                .build());
+        responseObserver.onCompleted();
     }
 
     /**
