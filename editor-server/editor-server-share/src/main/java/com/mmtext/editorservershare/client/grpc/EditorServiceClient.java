@@ -1,6 +1,7 @@
 package com.mmtext.editorservershare.client.grpc;
 
 import com.google.protobuf.Timestamp;
+
 import com.mmtext.common.grpc.CommonProto;
 import com.mmtext.editorservershare.domain.Document;
 import com.mmtext.editorservershare.domain.DocumentInfo;
@@ -26,11 +27,12 @@ import java.util.stream.Collectors;
 public class EditorServiceClient {
 
     private static final Logger log = LoggerFactory.getLogger(EditorServiceClient.class);
-
+    private final EditorServiceGrpc.EditorServiceBlockingStub stub;
     private final ManagedChannel editorServiceChannel;
 
     @Autowired
-    public EditorServiceClient(ManagedChannel editorServiceChannel) {
+    public EditorServiceClient(EditorServiceGrpc.EditorServiceBlockingStub stub, ManagedChannel editorServiceChannel) {
+        this.stub = stub;
         this.editorServiceChannel = editorServiceChannel;
     }
 
@@ -41,7 +43,6 @@ public class EditorServiceClient {
     @Retry(name = "editorService")
     public Optional<Document> getDocument(String documentId, String requestorId) {
         try {
-            EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
 
             EditorServiceProto.GetDocumentRequest request = EditorServiceProto.GetDocumentRequest.newBuilder()
                     .setDocumentId(documentId)
@@ -72,7 +73,7 @@ public class EditorServiceClient {
     @Retry(name = "editorService")
     public DocumentInfo getDocumentInfo(String documentId) {
         try {
-            EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
+            
 
             EditorServiceProto.GetDocumentInfoRequest request = EditorServiceProto.GetDocumentInfoRequest.newBuilder()
                     .setDocumentId(documentId)
@@ -112,7 +113,7 @@ public class EditorServiceClient {
     @Retry(name = "editorService")
     public boolean documentExists(String documentId) {
         try {
-            EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
+            
 
             EditorServiceProto.DocumentExistsRequest request = EditorServiceProto.DocumentExistsRequest.newBuilder()
                     .setDocumentId(documentId)
@@ -133,7 +134,7 @@ public class EditorServiceClient {
     @Retry(name = "editorService")
     public Optional<DocumentWithAccess> getDocumentWithAccess(String documentId, String requestorId) {
         try {
-            EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
+            
 
             EditorServiceProto.GetDocumentWithAccessRequest request = EditorServiceProto.GetDocumentWithAccessRequest.newBuilder()
                     .setDocumentId(documentId)
@@ -172,7 +173,7 @@ public class EditorServiceClient {
     @Retry(name = "editorService")
     public boolean updateSharingSettings(String documentId, String ownerId, boolean allowAccessRequests, String updatedBy) {
         try {
-            EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
+            
 
             EditorServiceProto.UpdateSharingSettingsRequest request = EditorServiceProto.UpdateSharingSettingsRequest.newBuilder()
                     .setDocumentId(documentId)
@@ -200,7 +201,7 @@ public class EditorServiceClient {
         }
 
         try {
-            EditorServiceGrpc.EditorServiceBlockingStub stub = EditorServiceGrpc.newBlockingStub(editorServiceChannel);
+            
 
             EditorServiceProto.GetDocumentsByIdsRequest request = EditorServiceProto.GetDocumentsByIdsRequest.newBuilder()
                     .addAllDocumentIds(documentIds)

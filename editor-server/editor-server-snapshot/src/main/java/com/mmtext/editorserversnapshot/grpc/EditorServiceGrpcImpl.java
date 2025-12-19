@@ -8,7 +8,6 @@ import com.mmtext.editorserversnapshot.model.Document;
 import com.mmtext.editorserversnapshot.service.DocumentService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import net.devh.boot.grpc.server.service.GrpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
  * gRPC server implementation for Editor Service
  */
 @Service
-@GrpcService
 public class EditorServiceGrpcImpl extends EditorServiceGrpc.EditorServiceImplBase {
 
     private static final Logger log = LoggerFactory.getLogger(EditorServiceGrpcImpl.class);

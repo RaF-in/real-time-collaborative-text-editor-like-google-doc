@@ -4,6 +4,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.mmtext.auth.grpc.AuthServiceGrpc;
+import com.mmtext.editor.grpc.EditorServiceGrpc;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,5 +50,15 @@ public class GrpcConfig {
 
         log.info("Created gRPC channel for Editor Service at {}:{}", host, port);
         return channel;
+    }
+
+    @Bean
+    public AuthServiceGrpc.AuthServiceBlockingStub authServiceStub(ManagedChannel authServiceChannel) {
+        return AuthServiceGrpc.newBlockingStub(authServiceChannel);
+    }
+
+    @Bean
+    public EditorServiceGrpc.EditorServiceBlockingStub editorServiceStub(ManagedChannel editorServiceChannel) {
+        return EditorServiceGrpc.newBlockingStub(editorServiceChannel);
     }
 }

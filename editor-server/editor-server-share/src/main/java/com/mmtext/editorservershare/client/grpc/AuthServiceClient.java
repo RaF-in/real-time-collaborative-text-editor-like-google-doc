@@ -7,7 +7,6 @@ import com.mmtext.common.grpc.CommonProto;
 import com.mmtext.editorservershare.domain.User;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.ManagedChannel;
 import org.slf4j.Logger;
@@ -26,11 +25,12 @@ import java.util.stream.Collectors;
 public class AuthServiceClient {
 
     private static final Logger log = LoggerFactory.getLogger(AuthServiceClient.class);
-
+    private final AuthServiceGrpc.AuthServiceBlockingStub stub;
     private final ManagedChannel authServiceChannel;
 
     @Autowired
-    public AuthServiceClient(ManagedChannel authServiceChannel) {
+    public AuthServiceClient(AuthServiceGrpc.AuthServiceBlockingStub stub, ManagedChannel authServiceChannel) {
+        this.stub = stub;
         this.authServiceChannel = authServiceChannel;
     }
 
@@ -41,7 +41,7 @@ public class AuthServiceClient {
     @Retry(name = "authService")
     public Optional<User> getUserById(String userId) {
         try {
-            AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
+            
 
             AuthServiceProto.GetUserByIdRequest request = AuthServiceProto.GetUserByIdRequest.newBuilder()
                     .setUserId(userId)
@@ -71,7 +71,7 @@ public class AuthServiceClient {
     @Retry(name = "authService")
     public Optional<User> getUserByEmail(String email) {
         try {
-            AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
+            
 
             AuthServiceProto.GetUserByEmailRequest request = AuthServiceProto.GetUserByEmailRequest.newBuilder()
                     .setEmail(email)
@@ -105,7 +105,7 @@ public class AuthServiceClient {
         }
 
         try {
-            AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
+            
 
             AuthServiceProto.GetUsersByIdsRequest request = AuthServiceProto.GetUsersByIdsRequest.newBuilder()
                     .addAllUserIds(userIds)
@@ -140,7 +140,7 @@ public class AuthServiceClient {
     @Retry(name = "authService")
     public List<User> searchUsers(String emailPattern, int limit, int offset) {
         try {
-            AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
+            
 
             AuthServiceProto.SearchUsersRequest request = AuthServiceProto.SearchUsersRequest.newBuilder()
                     .setEmailPattern(emailPattern)
@@ -166,7 +166,7 @@ public class AuthServiceClient {
     @Retry(name = "authService")
     public boolean validateUser(String userId) {
         try {
-            AuthServiceGrpc.AuthServiceBlockingStub stub = AuthServiceGrpc.newBlockingStub(authServiceChannel);
+            
 
             AuthServiceProto.ValidateUserRequest request = AuthServiceProto.ValidateUserRequest.newBuilder()
                     .setUserId(userId)
