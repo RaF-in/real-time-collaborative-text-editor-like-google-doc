@@ -6,7 +6,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.scheduling.annotation.EnableScheduling;
 import com.mmtext.authserver.config.CorsProperties;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration.class
+})
 @EnableScheduling
 @EnableConfigurationProperties(CorsProperties.class)
 public class AuthServerApplication {
