@@ -429,4 +429,35 @@
   .documents-grid {
     grid-template-columns: 1fr;
   }
+
+/* Disabled state for template card */
+.template-card.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.template-card.disabled:hover {
+  border-color: #dadce0;
+  box-shadow: none;
+}
+
+/* Creating animation */
+.template-icon.creating {
+  animation: spin 1s linear infinite;
+}
+
+.template-name.creating {
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 }

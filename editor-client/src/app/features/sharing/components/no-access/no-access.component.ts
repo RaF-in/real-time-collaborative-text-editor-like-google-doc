@@ -100,6 +100,6 @@ export class NoAccessComponent implements OnInit {
   }
   
   goBack(): void {
-    this.router.navigate(['/documents']);
+    this.router.navigate(['/home']);
   }
 }

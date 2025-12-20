@@ -28,6 +28,16 @@ public class SharingController {
         this.linkService = linkService;
     }
 
+    /**
+     * Convert string document ID to UUID using a consistent approach
+     * This ensures that the same string document ID always maps to the same UUID
+     */
+    private UUID convertToUuid(String documentId) {
+        // Use a consistent namespace UUID for deterministic conversion
+        UUID namespace = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        return UUID.nameUUIDFromBytes((namespace + documentId).getBytes());
+    }
+
     // ========================================
     // Document Sharing
     // ========================================
@@ -35,13 +45,13 @@ public class SharingController {
     @PostMapping("/documents/{documentId}/share-multiple")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ShareMultipleResponse> shareWithMultiple(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @Valid @RequestBody ShareWithMultipleRequest request,
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
         ShareMultipleResponse response = sharingService.shareWithMultiple(
-                documentId, request, currentUserId, httpRequest
+                convertToUuid(documentId), documentId, request, currentUserId, httpRequest
         );
         return ResponseEntity.ok(response);
     }
@@ -49,42 +59,43 @@ public class SharingController {
     @GetMapping("/documents/{documentId}/permissions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<DocumentPermissionResponse>> getPermissions(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @CurrentUser UUID currentUserId) {
 
-        return ResponseEntity.ok(sharingService.getDocumentPermissions(documentId, currentUserId));
+        return ResponseEntity.ok(sharingService.getDocumentPermissions(convertToUuid(documentId), currentUserId));
     }
 
     @PutMapping("/documents/{documentId}/permissions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<DocumentPermissionResponse> updatePermission(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @Valid @RequestBody UpdatePermissionDto request,
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
-        return ResponseEntity.ok(sharingService.updatePermission(documentId, request, currentUserId, httpRequest));
+        return ResponseEntity.ok(sharingService.updatePermission(convertToUuid(documentId), request, currentUserId, httpRequest));
     }
 
     @DeleteMapping("/documents/{documentId}/permissions/{userId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> removePermission(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @PathVariable UUID userId,
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
-        sharingService.removePermission(documentId, userId, currentUserId, httpRequest);
+        sharingService.removePermission(convertToUuid(documentId), userId, currentUserId, httpRequest);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/documents/{documentId}/access-info")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<DocumentAccessInfoResponse> getAccessInfo(
-            @PathVariable UUID documentId,
-            @CurrentUser UUID currentUserId) {
+            @PathVariable String documentId,
+            @CurrentUser UUID currentUserId,
+            HttpServletRequest httpRequest) {
 
-        return ResponseEntity.ok(sharingService.getDocumentAccessInfo(documentId, currentUserId));
+        return ResponseEntity.ok(sharingService.getDocumentAccessInfo(convertToUuid(documentId), documentId, currentUserId, httpRequest));
     }
 
     // ========================================
@@ -94,21 +105,21 @@ public class SharingController {
     @PostMapping("/documents/{documentId}/request-access")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<AccessRequestResponse> requestAccess(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @Valid @RequestBody RequestAccessDto request,
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
-        return ResponseEntity.ok(accessRequestService.requestAccess(documentId, request, currentUserId, httpRequest));
+        return ResponseEntity.ok(accessRequestService.requestAccess(convertToUuid(documentId), request, currentUserId, httpRequest));
     }
 
     @GetMapping("/documents/{documentId}/access-requests")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<AccessRequestResponse>> getPendingRequests(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @CurrentUser UUID currentUserId) {
 
-        return ResponseEntity.ok(accessRequestService.getPendingAccessRequests(documentId, currentUserId));
+        return ResponseEntity.ok(accessRequestService.getPendingAccessRequests(convertToUuid(documentId), currentUserId));
     }
 
     // Email link handlers - No authentication required
@@ -137,24 +148,24 @@ public class SharingController {
     @PostMapping("/documents/{documentId}/links")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ShareableLinkResponse> createLink(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @Valid @RequestBody CreateShareableLinkDto request,
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
         String baseUrl = getBaseUrl(httpRequest);
-        return ResponseEntity.ok(linkService.createShareableLink(documentId, request, currentUserId, baseUrl));
+        return ResponseEntity.ok(linkService.createShareableLink(convertToUuid(documentId), request, currentUserId, baseUrl));
     }
 
     @GetMapping("/documents/{documentId}/links")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ShareableLinkResponse>> getLinks(
-            @PathVariable UUID documentId,
+            @PathVariable String documentId,
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
         String baseUrl = getBaseUrl(httpRequest);
-        return ResponseEntity.ok(linkService.getActiveShareableLinks(documentId, currentUserId, baseUrl));
+        return ResponseEntity.ok(linkService.getActiveShareableLinks(convertToUuid(documentId), currentUserId, baseUrl));
     }
 
     @DeleteMapping("/links/{linkId}")

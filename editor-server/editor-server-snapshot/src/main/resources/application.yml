@@ -1,11 +1,37 @@
+
 spring:
   application:
     name: editor-server-snapshot
+
+  # DataSource Configuration
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/snapshot_db}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:admin}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
 
 # gRPC Server Configuration
 grpc:
   server:
     port: ${GRPC_SERVER_PORT:9091}
+
+  share:
+    service:
+      host: ${SHARE_GRPC_HOST:localhost}
+      port: ${SHARE_GRPC_PORT:50092}
 
   # JWT Configuration - OAuth2 Resource Server
   security:
@@ -44,18 +70,6 @@ grpc:
     listener:
       ack-mode: manual_immediate
       concurrency: 1                       # Single consumer for ordering
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          batch_size: 20
-        order_inserts: true
-        order_updates: true
 
 # Debezium configuration
 debezium:

@@ -54,8 +54,9 @@ export const routes: Routes = [
   },
   {
     path: 'documents',
-    loadComponent: () => import('./features/document-list/document-list.component')
-      .then(m => m.DocumentListComponent)
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/homepage/homepage.component')
+      .then(m => m.HomepageComponent)
   },
    {
     path: 'documents/:id/request-access',

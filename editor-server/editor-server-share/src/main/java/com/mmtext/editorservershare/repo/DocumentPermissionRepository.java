@@ -51,4 +51,6 @@ public interface DocumentPermissionRepository extends JpaRepository<DocumentPerm
             @Param("documentId") UUID documentId,
             @Param("level") PermissionLevel level
     );
+
+    boolean existsByDocumentId(UUID documentUuid);
 }

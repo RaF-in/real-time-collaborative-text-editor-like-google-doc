@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package com.mmtext.share;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option java_package = "com.mmtext.share.grpc";
+option java_outer_classname = "ShareServiceProto";
+
+// Service for managing document sharing and permissions
+service ShareService {
+
+  // Create initial permissions for a new document (synchronous with document creation)
+  rpc CreateDocumentPermissions(CreateDocumentPermissionsRequest) returns (CreateDocumentPermissionsResponse);
+
+  // Check if permissions exist for a document (idempotency check)
+  rpc CheckPermissionsExist(CheckPermissionsExistRequest) returns (CheckPermissionsExistResponse);
+
+  // Get user permissions for a document (access control)
+  rpc GetUserPermissions(GetUserPermissionsRequest) returns (GetUserPermissionsResponse);
+
+  // Health check for service monitoring
+  rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse);
+}
+
+// Request to create initial permissions for a newly created document
+message CreateDocumentPermissionsRequest {
+  string document_id = 1;           // Document ID from snapshot server
+  string document_title = 2;        // Document title
+  string owner_id = 3;              // Owner user ID
+  google.protobuf.Timestamp created_at = 4;  // Document creation timestamp
+  bool allow_access_requests = 5;  // Whether access requests are allowed
+}
+
+// Response from permission creation
+message CreateDocumentPermissionsResponse {
+  bool success = 1;                 // Whether permission creation succeeded
+  string document_id = 2;           // Document ID (echoed back)
+  string permission_id = 3;         // Created permission UUID
+  PermissionLevel granted_permission = 4;  // Granted permission level
+  string error_message = 5;        // Error message if failed
+  google.protobuf.Timestamp granted_at = 6;  // When permission was granted
+}
+
+// Request to check if permissions already exist for a document
+message CheckPermissionsExistRequest {
+  string document_id = 1;           // Document ID to check
+}
+
+// Response indicating if permissions exist
+message CheckPermissionsExistResponse {
+  bool exists = 1;                  // Whether permissions exist
+  string document_id = 2;           // Document ID (echoed back)
+  PermissionLevel highest_permission = 3;  // Highest permission level if exists
+  int64 permission_count = 4;        // Number of permissions if exists
+}
+
+// Request to get specific user's permissions for a document
+message GetUserPermissionsRequest {
+  string document_id = 1;           // Document ID
+  string user_id = 2;               // User ID
+}
+
+// Response with user's permissions
+message GetUserPermissionsResponse {
+  bool has_permission = 1;          // Whether user has any permission
+  string document_id = 2;           // Document ID (echoed back)
+  string user_id = 3;               // User ID (echoed back)
+  PermissionLevel permission_level = 4;  // User's permission level
+  bool can_edit = 5;               // Whether user can edit
+  bool can_share = 6;              // Whether user can share
+  bool can_manage = 7;             // Whether user can manage permissions
+  google.protobuf.Timestamp granted_at = 8;  // When permission was granted
+  string granted_by = 9;            // Who granted the permission
+}
+
+// Health check response
+message HealthCheckResponse {
+  bool healthy = 1;                  // Service health status
+  string service_name = 2;          // Service name
+  string version = 3;               // Service version
+  google.protobuf.Timestamp timestamp = 4;  // Response timestamp
+}
+
+// Permission levels (consistent with existing enum)
+enum PermissionLevel {
+  UNKNOWN = 0;                     // Unknown permission level
+  VIEWER = 1;                      // Can only view
+  EDITOR = 2;                      // Can edit and view
+  OWNER = 3;                       // Full control including permissions management
+}

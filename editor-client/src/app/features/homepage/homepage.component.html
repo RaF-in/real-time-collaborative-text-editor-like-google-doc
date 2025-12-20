@@ -94,7 +94,9 @@
 
         <div class="document-templates">
           <!-- Blank Document Card -->
-          <div class="template-card blank-doc" (click)="createBlankDocument()">
+          <div class="template-card blank-doc"
+               [class.disabled]="isCreatingDocument"
+               (click)="!isCreatingDocument && createBlankDocument()">
             <div class="template-preview">
               <div class="blank-page">
                 <div class="blank-line"></div>
@@ -104,8 +106,10 @@
               </div>
             </div>
             <div class="template-info">
-              <div class="template-icon">+</div>
-              <span class="template-name">Blank</span>
+              <div class="template-icon" *ngIf="!isCreatingDocument">+</div>
+              <div class="template-icon creating" *ngIf="isCreatingDocument">⟳</div>
+              <span class="template-name" *ngIf="!isCreatingDocument">Blank</span>
+              <span class="template-name creating" *ngIf="isCreatingDocument">Creating...</span>
             </div>
           </div>
         </div>

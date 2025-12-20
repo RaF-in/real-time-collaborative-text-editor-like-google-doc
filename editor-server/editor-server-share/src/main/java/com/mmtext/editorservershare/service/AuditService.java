@@ -61,6 +61,21 @@ public class AuditService {
     }
 
     @Async
+    public void logPermissionCreated(
+            UUID documentId,
+            UUID userId,
+            PermissionLevel permissionLevel,
+            String details) {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("details", details);
+
+        ShareAuditLog log = new ShareAuditLog(documentId, userId, ShareAuditLog.ACTION_PERMISSION_CHANGE, userId, null,
+                permissionLevel, "system", "ShareService-gRPC", metadata, Instant.now());
+
+        auditLogRepository.save(log);
+    }
+
+    @Async
     public void logAccessRequest(
             UUID documentId,
             UUID userId,

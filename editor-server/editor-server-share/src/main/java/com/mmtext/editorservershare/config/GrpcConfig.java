@@ -20,7 +20,7 @@ public class GrpcConfig {
 
     @Bean
     public ManagedChannel authServiceChannel(
-            @Value("${grpc.auth.service.host:localhost}") String host,
+            @Value("${grpc.auth.service.host:auth-server}") String host,
             @Value("${grpc.auth.service.port:9090}") int port) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
@@ -36,8 +36,9 @@ public class GrpcConfig {
 
     @Bean
     public ManagedChannel editorServiceChannel(
-            @Value("${grpc.editor.service.host:localhost}") String host,
+            @Value("${grpc.editor.service.host:editor-server-snapshot-1}") String host,
             @Value("${grpc.editor.service.port:9091}") int port) {
+
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .keepAliveTime(30, TimeUnit.SECONDS)

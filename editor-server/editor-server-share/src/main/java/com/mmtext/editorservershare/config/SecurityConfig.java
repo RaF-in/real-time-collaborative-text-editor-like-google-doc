@@ -1,5 +1,6 @@
 package com.mmtext.editorservershare.config;
 
+import com.mmtext.editorservershare.securityHandler.JwtAuthenticationConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,7 +12,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -55,7 +55,11 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/.well-known/**",
                                 "/actuator/health",
-                                "/actuator/info"
+                                "/actuator/info",
+                                // Public sharing endpoints
+                                "/api/share/access-requests/*/approve",
+                                "/api/share/access-requests/*/reject",
+                                "/api/share/link/*"
                         ).permitAll()
 
                         // Admin endpoints

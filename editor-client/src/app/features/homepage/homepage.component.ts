@@ -3,6 +3,7 @@ import { Component, ChangeDetectionStrategy, OnInit, HostListener } from '@angul
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { DocumentService } from '../../core/services/document.service';
 import { User } from '../../core/models/user.model';
 import { TruncatePipe } from '../../shared/pipes/truncate.pipe';
 import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
@@ -30,16 +31,20 @@ export interface Document {
 })
 export class HomepageComponent implements OnInit {
     private authService: AuthService;
+    private documentService: DocumentService;
     private router: Router;
     currentUser: () => User | null;
     recentDocuments: Document[] = [];
     showUserMenu = false;
+    isCreatingDocument = false;
 
     constructor(
         authService: AuthService,
+        documentService: DocumentService,
         router: Router
     ) {
         this.authService = authService;
+        this.documentService = documentService;
         this.router = router;
         this.currentUser = this.authService.currentUser;
     }
@@ -76,13 +81,40 @@ export class HomepageComponent implements OnInit {
     }
 
     createBlankDocument(): void {
-        // Generate unique document ID
-        const timestamp = Date.now();
-        const randomStr = Math.random().toString(36).substring(2, 9);
-        const docId = `doc-${timestamp}-${randomStr}`;
+        if (this.isCreatingDocument) {
+            return; // Prevent multiple clicks while creating
+        }
 
-        // Navigate to editor with new document ID
-        this.router.navigate(['/editor', docId]);
+        this.isCreatingDocument = true;
+
+        // Step 1: Create document via main server API
+        this.documentService.createDocument().subscribe({
+            next: (createResponse) => {
+                const docId = createResponse.id;
+
+                // Step 2: Initialize document in snapshot database
+                this.documentService.initializeDocument(docId).subscribe({
+                    next: () => {
+                        // Step 3: Navigate to editor with created document ID
+                        this.router.navigate(['/editor', docId]);
+                        this.isCreatingDocument = false;
+                    },
+                    error: (initError) => {
+                        console.error('Failed to initialize document in snapshot:', initError);
+                        // Still navigate even if snapshot initialization fails,
+                        // the document exists in main server and can be initialized later
+                        this.router.navigate(['/editor', docId]);
+                        this.isCreatingDocument = false;
+                    }
+                });
+            },
+            error: (createError) => {
+                console.error('Failed to create document:', createError);
+                this.isCreatingDocument = false;
+                // Show error message to user (you could implement a toast notification here)
+                alert('Failed to create document. Please try again.');
+            }
+        });
     }
 
     openDocument(documentId: string): void {

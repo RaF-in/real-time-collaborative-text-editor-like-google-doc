@@ -36,12 +36,26 @@ public class DocumentSharingService {
         this.editorServiceClient = editorServiceClient;
     }
 
+    
     /**
      * Share document with multiple people at once
      */
     @Transactional
     public ShareMultipleResponse shareWithMultiple(
             UUID documentId,
+            ShareWithMultipleRequest request,
+            UUID currentUserId,
+            HttpServletRequest httpRequest) {
+        return shareWithMultiple(documentId, null, request, currentUserId, httpRequest);
+    }
+
+    /**
+     * Share document with multiple people at once (with original string ID)
+     */
+    @Transactional
+    public ShareMultipleResponse shareWithMultiple(
+            UUID documentId,
+            String originalDocumentId,
             ShareWithMultipleRequest request,
             UUID currentUserId,
             HttpServletRequest httpRequest) {
@@ -53,7 +67,9 @@ public class DocumentSharingService {
         validateCanShare(documentId, currentUserId);
 
         // Get document info
-        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(
+            originalDocumentId != null ? originalDocumentId : documentId.toString()
+        );
 
         // Get sharer info
         User sharerInfo = authServiceClient.getUserById(currentUserId.toString())
@@ -286,9 +302,26 @@ public class DocumentSharingService {
     public DocumentAccessInfoResponse getDocumentAccessInfo(
             UUID documentId,
             UUID currentUserId) {
+        return getDocumentAccessInfo(documentId, null, currentUserId, null);
+    }
+
+    public DocumentAccessInfoResponse getDocumentAccessInfo(
+            UUID documentId,
+            UUID currentUserId,
+            HttpServletRequest httpRequest) {
+        return getDocumentAccessInfo(documentId, null, currentUserId, httpRequest);
+    }
+
+    public DocumentAccessInfoResponse getDocumentAccessInfo(
+            UUID documentId,
+            String originalDocumentId,
+            UUID currentUserId,
+            HttpServletRequest httpRequest) {
 
         // Get document info
-        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(
+            originalDocumentId != null ? originalDocumentId : documentId.toString()
+        );
 
         // Get user's permission
         PermissionLevel permissionLevel = getPermissionLevel(documentId, currentUserId);

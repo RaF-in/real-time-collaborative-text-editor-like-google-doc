@@ -177,7 +177,7 @@ export class RequestAccessComponent implements OnInit {
   private loadAccessInfo(): void {
     const documentId = this.route.snapshot.paramMap.get('id');
     if (!documentId) {
-      this.router.navigate(['/documents']);
+      this.router.navigate(['/home']);
       return;
     }
     
@@ -215,10 +215,10 @@ export class RequestAccessComponent implements OnInit {
   }
   
   cancel(): void {
-    this.router.navigate(['/documents']);
+    this.router.navigate(['/home']);
   }
   
   goToDashboard(): void {
-    this.router.navigate(['/documents']);
+    this.router.navigate(['/home']);
   }
 }

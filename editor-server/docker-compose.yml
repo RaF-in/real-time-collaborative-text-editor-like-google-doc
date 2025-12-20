@@ -431,6 +431,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: admin
       SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
       ZOOKEEPER_CONNECT: zookeeper:2181
+      # gRPC Configuration
+      SHARE_GRPC_HOST: share-server
+      SHARE_GRPC_PORT: 50092
       # CORS Configuration
       CORS_ORIGINS: http://client-app,http://localhost:4200
       CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
@@ -453,6 +456,9 @@ services:
       - editor-server-1
       - editor-server-2
       - editor-server-3
+      - share-server
+      - editor-server-snapshot-1
+      - auth-server
     ports:
       - "8081:80"
     volumes:
@@ -576,8 +582,8 @@ services:
         condition: service_healthy
     ports:
       - "9086:8080"
-#    env_file:
-#      - ./editor-server-share/.env.local
+    env_file:
+      - ./editor-server-share/.env.local
     environment:
       SERVER_PORT: 8080
       SERVER_ID: share-server
@@ -605,6 +611,15 @@ services:
       FRONTEND_URL: http://localhost:4200
       APP_FRONTEND_OAUTH_REDIRECT_PATH: ${APP_FRONTEND_OAUTH_REDIRECT_PATH:-/auth/callback}
 
+      # Editor Service Configuration
+      EDITOR_SERVICE_URL: http://nginx/api
+
+      # gRPC Configuration
+      AUTH_GRPC_HOST: auth-server
+      AUTH_GRPC_PORT: 9090
+      EDITOR_GRPC_HOST: editor-server-snapshot-1
+      EDITOR_GRPC_PORT: 9091
+
       # Rate Limiting
       APP_AUTH_RATE_LIMIT_LOGIN_ATTEMPTS: ${APP_AUTH_RATE_LIMIT_LOGIN_ATTEMPTS:-5}
       APP_AUTH_RATE_LIMIT_WINDOW_MINUTES: ${APP_AUTH_RATE_LIMIT_WINDOW_MINUTES:-15}
@@ -630,11 +645,13 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
     networks:
       - editor-network
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s  # Give time for nginx to start
 
   postgres-share:
     image: postgres:17

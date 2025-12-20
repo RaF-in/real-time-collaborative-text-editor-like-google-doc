@@ -35,11 +35,6 @@ editor:
     max-wait-time-ms: 1000
   server:
     id: ${SERVER_ID:server-1}
-  snapshot:
-    datasource:
-      url: jdbc:postgresql://postgres-snapshot:5432/snapshot_db
-      username: snapshot_user
-      password: snapshot_pass
 
 # JWT Configuration - OAuth2 Resource Server
   security:
