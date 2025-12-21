@@ -4,7 +4,7 @@
       #editorTextarea
       class="editor-textarea"
       [ngModel]="content"
-      [disabled]="!isConnected"
+      [disabled]="!isConnected || !canEdit()"
       (ngModelChange)="onInput($event)"
       (keydown)="onKeyDown($event)"
       placeholder="Start typing..."

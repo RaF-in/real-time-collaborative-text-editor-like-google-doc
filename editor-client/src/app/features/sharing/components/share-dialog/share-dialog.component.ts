@@ -5,9 +5,9 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DocumentSharingService } from '../../../../core/services/document-sharing.service';
 import { PermissionLevel } from '../../../../core/models/sharing.model';
@@ -22,7 +22,8 @@ export interface ShareDialogData {
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
-    MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatProgressSpinnerModule
+    MatInputModule, MatSelectModule, MatIconModule, MatProgressSpinnerModule,
+    MatCheckboxModule
   ],
   templateUrl: './share-dialog.component.html',
   styleUrl: './share-dialog.component.css',
@@ -37,11 +38,10 @@ export class ShareDialogComponent implements OnInit {
   
   readonly PermissionLevel = PermissionLevel;
   readonly isLoading = signal(false);
-  readonly isSharingMultiple = signal(false);
-  readonly isCreatingLink = signal(false);
+  readonly isSharing = signal(false);
+  readonly shareableLink = signal<string>('');
   
   shareForm!: FormGroup;
-  linkForm!: FormGroup;
   
   readonly permissionOptions = [
     { value: PermissionLevel.EDITOR, label: 'Can edit', icon: 'edit' },
@@ -49,19 +49,16 @@ export class ShareDialogComponent implements OnInit {
   ];
   
   ngOnInit(): void {
-    this.initializeForms();
+    this.initializeForm();
     this.loadData();
+    this.generateShareableLink();
   }
   
-  private initializeForms(): void {
+  private initializeForm(): void {
     this.shareForm = this.fb.group({
       recipients: this.fb.array([this.createRecipientFormGroup()]),
-      message: ['', Validators.maxLength(500)]
-    });
-    
-    this.linkForm = this.fb.group({
-      permissionLevel: [PermissionLevel.VIEWER, Validators.required],
-      expiresInDays: [null, Validators.min(1)]
+      message: ['', Validators.maxLength(500)],
+      notifyPeople: [true]
     });
   }
   
@@ -97,62 +94,87 @@ export class ShareDialogComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
-    
-    this.sharingService.getShareableLinks(this.data.documentId).subscribe();
   }
   
-  shareWithMultiple(): void {
+  private generateShareableLink(): void {
+    // Generate shareable link immediately when dialog opens
+    this.sharingService.createShareableLink(this.data.documentId, {
+      permissionLevel: PermissionLevel.EDITOR,
+      expiresInDays: 1
+    }).subscribe({
+      next: (link) => {
+        // Generate a user-accessible frontend URL
+        const frontendUrl = `${window.location.origin}/link/${link.linkToken}`;
+        this.shareableLink.set(frontendUrl);
+      },
+      error: () => {
+        // If link creation fails, try to get existing links
+        this.sharingService.getShareableLinks(this.data.documentId).subscribe({
+          next: (links) => {
+            if (links.length > 0) {
+              // Generate a user-accessible frontend URL
+              const frontendUrl = `${window.location.origin}/link/${links[0].linkToken}`;
+              this.shareableLink.set(frontendUrl);
+            }
+          }
+        });
+      }
+    });
+  }
+  
+  share(): void {
     if (this.shareForm.invalid) return;
     
-    this.isSharingMultiple.set(true);
+    const formValue = this.shareForm.value;
+    const notifyPeople = formValue.notifyPeople;
     
-    this.sharingService.shareWithMultiple(this.data.documentId, this.shareForm.value).subscribe({
+    // Check if there are any valid recipients
+    const hasValidRecipients = this.recipients.controls.some(
+      control => control.get('email')?.value && control.valid
+    );
+    
+    if (!hasValidRecipients) {
+      this.showError('Please add at least one valid email address');
+      return;
+    }
+    
+    this.isSharing.set(true);
+    
+    const shareData = {
+      recipients: formValue.recipients,
+      message: formValue.message,
+      shareableLink: this.shareableLink(),
+      notifyPeople: notifyPeople
+    };
+    
+    this.sharingService.shareWithMultiple(this.data.documentId, shareData).subscribe({
       next: (response) => {
-        this.showSuccess(`Shared with ${response.successCount} of ${response.totalRecipients} people. Email invitations sent.`);
+        if (notifyPeople) {
+          this.showSuccess(`Shared with ${response.successCount} of ${response.totalRecipients} people. Email notifications sent with link.`);
+        } else {
+          this.showSuccess(`Shared with ${response.successCount} of ${response.totalRecipients} people. No notifications sent.`);
+        }
+        
         if (response.failureCount > 0) {
           this.showError(`${response.failureCount} failed. Please check the email addresses.`);
         }
-        this.shareForm.reset();
-        this.recipients.clear();
-        this.recipients.push(this.createRecipientFormGroup());
-        this.isSharingMultiple.set(false);
+        
+        this.isSharing.set(false);
+        this.dialogRef.close();
       },
       error: (err) => {
         this.showError(err.error?.message || 'Failed to share document');
-        this.isSharingMultiple.set(false);
+        this.isSharing.set(false);
       }
     });
   }
   
-  createShareableLink(): void {
-    if (this.linkForm.invalid) return;
-    
-    this.isCreatingLink.set(true);
-    this.sharingService.createShareableLink(this.data.documentId, this.linkForm.value).subscribe({
-      next: () => {
-        this.showSuccess('Shareable link created successfully');
-        this.linkForm.reset({ permissionLevel: PermissionLevel.VIEWER });
-        this.isCreatingLink.set(false);
-      },
-      error: () => {
-        this.showError('Failed to create link');
-        this.isCreatingLink.set(false);
-      }
-    });
-  }
-  
-  copyLink(url: string): void {
-    navigator.clipboard.writeText(url);
-    this.showSuccess('Link copied to clipboard');
-  }
-  
-  revokeLink(linkId: string): void {
-    if (!confirm('Revoke this link? Anyone with the link will lose access.')) return;
-    
-    this.sharingService.revokeShareableLink(linkId).subscribe({
-      next: () => this.showSuccess('Link revoked successfully'),
-      error: () => this.showError('Failed to revoke link')
-    });
+  copyLink(): void {
+    const link = this.shareableLink();
+    if (link) {
+      navigator.clipboard.writeText(link);
+      this.showSuccess('Link copied to clipboard');
+    }
   }
   
   removePermission(userId: string, email: string): void {
@@ -177,9 +199,5 @@ export class ShareDialogComponent implements OnInit {
   
   private showError(message: string): void {
     this.snackBar.open(message, 'Close', { duration: 5000, panelClass: 'error-snackbar' });
-  }
-  
-  close(): void {
-    this.dialogRef.close();
   }
 }

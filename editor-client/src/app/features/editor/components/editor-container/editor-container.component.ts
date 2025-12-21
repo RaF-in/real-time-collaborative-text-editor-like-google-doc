@@ -42,6 +42,7 @@ export class EditorContainerComponent implements OnInit, OnDestroy {
   readonly documentId = signal<string>('');
   readonly documentTitle = signal<string>('');
   readonly canShare = signal(false);
+  readonly canEdit = signal(false);
 
   constructor(
     private route: ActivatedRoute,
@@ -64,6 +65,7 @@ export class EditorContainerComponent implements OnInit, OnDestroy {
   private loadAccessInfo(documentId: string): void {
     this.sharingService.getAccessInfo(documentId).subscribe(info => {
       this.canShare.set(info.canShare);
+      this.canEdit.set(info.canEdit);
       // Load document title from your document service
     });
   }

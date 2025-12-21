@@ -96,15 +96,26 @@ export class LoginComponent {
   }
 
   loginWithGoogle(): void {
-    // Get current return URL from sessionStorage or query params
-    const returnUrl = sessionStorage.getItem('returnUrl') ||
-                      this.route.snapshot.queryParams['returnUrl'] ||
-                      '/home';
+    // Get current return URL from query params first (highest priority)
+    // This handles the case when user is redirected from shared link
+    const queryReturnUrl = sessionStorage.getItem('returnUrl');
+    if (queryReturnUrl) {
+      console.log('Login: Found return URL in query params for Google OAuth:', queryReturnUrl);
+      // Store it in sessionStorage so it persists through OAuth flow
+      // Add a timestamp to make it unique
+      this.authService.storeReturnUrl(queryReturnUrl);
 
-    // Build OAuth URL with state parameter containing return URL
+      // Also store in a different key that we'll check after OAuth
+      sessionStorage.setItem('oauthReturnUrl', queryReturnUrl);
+      sessionStorage.setItem('oauthReturnTimestamp', Date.now().toString());
+    }
+
+    // Build OAuth URL without custom state parameter
+    // Let Spring Security handle the state for CSRF protection
     const oauthUrl = new URL(this.googleLoginUrl);
-    oauthUrl.searchParams.set('state', encodeURIComponent(returnUrl));
+    // Don't set custom state - let Spring Security manage it
 
+    console.log('Login: Redirecting to Google OAuth');
     // Redirect to backend OAuth2 endpoint
     window.location.href = oauthUrl.toString();
   }

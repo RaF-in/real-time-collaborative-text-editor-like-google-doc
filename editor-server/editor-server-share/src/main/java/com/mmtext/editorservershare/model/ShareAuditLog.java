@@ -1,8 +1,10 @@
 package com.mmtext.editorservershare.model;
 
 import com.mmtext.editorservershare.enums.PermissionLevel;
+import com.mmtext.editorservershare.util.PostgreSQLInetType;
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -26,8 +28,8 @@ public class ShareAuditLog {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "document_id", nullable = false)
-    private UUID documentId;
+    @Column(name = "document_id", nullable = false, length = 255)
+    private String documentId;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
@@ -47,6 +49,7 @@ public class ShareAuditLog {
     private PermissionLevel newPermission;
 
     @Column(name = "ip_address", columnDefinition = "inet")
+    @Type(PostgreSQLInetType.class)
     private String ipAddress;
 
     @Column(name = "user_agent", columnDefinition = "TEXT")
@@ -75,7 +78,7 @@ public class ShareAuditLog {
     public ShareAuditLog() {
     }
 
-    public ShareAuditLog(UUID documentId, UUID userId, String action, UUID targetUserId, PermissionLevel oldPermission, PermissionLevel newPermission, String ipAddress, String userAgent, Map<String, Object> metadata, Instant createdAt) {
+    public ShareAuditLog(String documentId, UUID userId, String action, UUID targetUserId, PermissionLevel oldPermission, PermissionLevel newPermission, String ipAddress, String userAgent, Map<String, Object> metadata, Instant createdAt) {
         this.documentId = documentId;
         this.userId = userId;
         this.action = action;
@@ -96,11 +99,11 @@ public class ShareAuditLog {
         this.id = id;
     }
 
-    public UUID getDocumentId() {
+    public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(UUID documentId) {
+    public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
 

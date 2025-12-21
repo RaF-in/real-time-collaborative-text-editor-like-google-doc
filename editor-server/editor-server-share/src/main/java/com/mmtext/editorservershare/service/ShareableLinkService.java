@@ -48,7 +48,7 @@ public class ShareableLinkService {
      */
     @Transactional
     public ShareableLinkResponse createShareableLink(
-            UUID documentId,
+            String documentId,
             CreateShareableLinkDto request,
             UUID currentUserId,
             String baseUrl) {
@@ -56,7 +56,13 @@ public class ShareableLinkService {
 
         // Verify user can share
         if (!sharingService.hasAccess(documentId, currentUserId,
-                PermissionLevel.EDITOR)) {
+                PermissionLevel.VIEWER)) {
+            throw new AccessDeniedException("You don't have permission to create shareable links");
+        }
+
+        // Additional check - user must have sharing permission
+        PermissionLevel userPermission = sharingService.getPermissionLevel(documentId, currentUserId);
+        if (userPermission == null || !userPermission.canShare()) {
             throw new AccessDeniedException("You don't have permission to create shareable links");
         }
 
@@ -91,13 +97,13 @@ public class ShareableLinkService {
      */
     @Transactional(readOnly = true)
     public List<ShareableLinkResponse> getActiveShareableLinks(
-            UUID documentId,
+            String documentId,
             UUID currentUserId,
             String baseUrl) {
 
         // Verify user can view links
         if (!sharingService.hasAccess(documentId, currentUserId,
-                PermissionLevel.EDITOR)) {
+                PermissionLevel.VIEWER)) {
             throw new AccessDeniedException("You don't have permission to view shareable links");
         }
 
@@ -119,7 +125,14 @@ public class ShareableLinkService {
 
         // Verify user can manage links
         if (!sharingService.hasAccess(link.getDocumentId(), currentUserId,
-                PermissionLevel.EDITOR)) {
+                PermissionLevel.VIEWER)) {
+            throw new AccessDeniedException("You don't have permission to revoke this link");
+        }
+
+        // Additional check - user must have sharing permission or be the creator
+        PermissionLevel userPermission = sharingService.getPermissionLevel(link.getDocumentId(), currentUserId);
+        if ((userPermission == null || !userPermission.canShare()) &&
+            !link.getCreatedBy().equals(currentUserId)) {
             throw new AccessDeniedException("You don't have permission to revoke this link");
         }
 
@@ -133,7 +146,7 @@ public class ShareableLinkService {
      * Access via shareable link and return document ID for redirect
      */
     @Transactional
-    public UUID accessViaShareableLinkAndGetDocumentId(String token, UUID userId) {
+    public String accessViaShareableLinkAndGetDocumentId(String token, UUID userId) {
 
         ShareableLink link = linkRepository.findByLinkToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired link"));
@@ -174,8 +187,36 @@ public class ShareableLinkService {
      */
     @Transactional
     public DocumentAccessInfoResponse accessViaShareableLink(String token, UUID userId) {
-        UUID documentId = accessViaShareableLinkAndGetDocumentId(token, userId);
-        return sharingService.getDocumentAccessInfo(documentId, userId);
+        // Get the shareable link to retrieve document ID
+        ShareableLink link = linkRepository.findByLinkToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired link"));
+
+        if (!link.isValid()) {
+            throw new IllegalArgumentException("This link has expired or been deactivated");
+        }
+
+        // Grant access if user doesn't already have it
+        if (userId != null) {
+            boolean hasAccess = sharingService.hasAccess(link.getDocumentId(), userId,
+                    PermissionLevel.VIEWER);
+
+            if (!hasAccess) {
+                // Auto-grant permission via link
+                DocumentPermission permission = DocumentPermission.builder()
+                        .documentId(link.getDocumentId())
+                        .userId(userId)
+                        .permissionLevel(link.getPermissionLevel())
+                        .grantedBy(link.getCreatedBy())
+                        .build();
+
+                permissionRepository.save(permission);
+                log.info("Auto-granted {} permission to user {} via link",
+                        link.getPermissionLevel(), userId);
+            }
+        }
+
+        // Get document access info using the document ID
+        return sharingService.getDocumentAccessInfo(link.getDocumentId(), userId, null);
     }
 
     // ========================================

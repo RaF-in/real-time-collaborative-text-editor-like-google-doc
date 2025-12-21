@@ -42,20 +42,7 @@ public class DocumentSharingService {
      */
     @Transactional
     public ShareMultipleResponse shareWithMultiple(
-            UUID documentId,
-            ShareWithMultipleRequest request,
-            UUID currentUserId,
-            HttpServletRequest httpRequest) {
-        return shareWithMultiple(documentId, null, request, currentUserId, httpRequest);
-    }
-
-    /**
-     * Share document with multiple people at once (with original string ID)
-     */
-    @Transactional
-    public ShareMultipleResponse shareWithMultiple(
-            UUID documentId,
-            String originalDocumentId,
+            String documentId,
             ShareWithMultipleRequest request,
             UUID currentUserId,
             HttpServletRequest httpRequest) {
@@ -67,9 +54,7 @@ public class DocumentSharingService {
         validateCanShare(documentId, currentUserId);
 
         // Get document info
-        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(
-            originalDocumentId != null ? originalDocumentId : documentId.toString()
-        );
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId);
 
         // Get sharer info
         User sharerInfo = authServiceClient.getUserById(currentUserId.toString())
@@ -177,7 +162,7 @@ public class DocumentSharingService {
      */
     @Transactional(readOnly = true)
     public List<DocumentPermissionResponse> getDocumentPermissions(
-            UUID documentId,
+            String documentId,
             UUID currentUserId) {
 
         // Verify user has access
@@ -205,7 +190,7 @@ public class DocumentSharingService {
      */
     @Transactional
     public DocumentPermissionResponse updatePermission(
-            UUID documentId,
+            String documentId,
             UpdatePermissionDto request,
             UUID currentUserId,
             HttpServletRequest httpRequest) {
@@ -256,7 +241,7 @@ public class DocumentSharingService {
      */
     @Transactional
     public void removePermission(
-            UUID documentId,
+            String documentId,
             UUID targetUserId,
             UUID currentUserId,
             HttpServletRequest httpRequest) {
@@ -300,28 +285,19 @@ public class DocumentSharingService {
      */
     @Transactional(readOnly = true)
     public DocumentAccessInfoResponse getDocumentAccessInfo(
-            UUID documentId,
+            String documentId,
             UUID currentUserId) {
-        return getDocumentAccessInfo(documentId, null, currentUserId, null);
+        return getDocumentAccessInfo(documentId, currentUserId, null);
     }
 
-    public DocumentAccessInfoResponse getDocumentAccessInfo(
-            UUID documentId,
-            UUID currentUserId,
-            HttpServletRequest httpRequest) {
-        return getDocumentAccessInfo(documentId, null, currentUserId, httpRequest);
-    }
 
     public DocumentAccessInfoResponse getDocumentAccessInfo(
-            UUID documentId,
-            String originalDocumentId,
+            String documentId,
             UUID currentUserId,
             HttpServletRequest httpRequest) {
 
         // Get document info
-        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(
-            originalDocumentId != null ? originalDocumentId : documentId.toString()
-        );
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId);
 
         // Get user's permission
         PermissionLevel permissionLevel = getPermissionLevel(documentId, currentUserId);
@@ -348,32 +324,32 @@ public class DocumentSharingService {
     // Helper Methods
     // ========================================
 
-    public PermissionLevel getPermissionLevel(UUID documentId, UUID userId) {
+    public PermissionLevel getPermissionLevel(String documentId, UUID userId) {
         return permissionRepository
                 .findByDocumentIdAndUserId(documentId, userId)
                 .map(DocumentPermission::getPermissionLevel)
                 .orElse(null);
     }
 
-    public boolean hasAccess(UUID documentId, UUID userId, PermissionLevel requiredLevel) {
+    public boolean hasAccess(String documentId, UUID userId, PermissionLevel requiredLevel) {
         PermissionLevel userLevel = getPermissionLevel(documentId, userId);
         return userLevel != null && userLevel.canPerform(requiredLevel);
     }
 
-    private void validateHasAccess(UUID documentId, UUID userId, PermissionLevel requiredLevel) {
+    private void validateHasAccess(String documentId, UUID userId, PermissionLevel requiredLevel) {
         if (!hasAccess(documentId, userId, requiredLevel)) {
             throw new AccessDeniedException("You don't have access to this document");
         }
     }
 
-    private void validateCanShare(UUID documentId, UUID userId) {
+    private void validateCanShare(String documentId, UUID userId) {
         PermissionLevel level = getPermissionLevel(documentId, userId);
         if (level == null || !level.canShare()) {
             throw new AccessDeniedException("You don't have permission to share this document");
         }
     }
 
-    private void validateCanManagePermissions(UUID documentId, UUID userId) {
+    private void validateCanManagePermissions(String documentId, UUID userId) {
         PermissionLevel level = getPermissionLevel(documentId, userId);
         if (level == null || !level.canManagePermissions()) {
             throw new AccessDeniedException(
@@ -384,7 +360,7 @@ public class DocumentSharingService {
     private DocumentPermissionResponse mapToPermissionResponse(
             DocumentPermission permission,
             UUID currentUserId,
-            UUID documentId,
+            String documentId,
             User userInfo) {
 
         PermissionLevel currentUserLevel = getPermissionLevel(documentId, currentUserId);

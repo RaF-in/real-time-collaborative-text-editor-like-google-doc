@@ -13,26 +13,26 @@ import java.util.UUID;
 @Repository
 public interface AccessRequestRepository extends JpaRepository<AccessRequest, UUID> {
 
-    List<AccessRequest> findByDocumentIdAndStatus(UUID documentId, RequestStatus status);
+    List<AccessRequest> findByDocumentIdAndStatus(String documentId, RequestStatus status);
 
     List<AccessRequest> findByRequesterIdOrderByRequestedAtDesc(UUID requesterId);
 
     Optional<AccessRequest> findByDocumentIdAndRequesterIdAndStatus(
-            UUID documentId, UUID requesterId, RequestStatus status
+            String documentId, UUID requesterId, RequestStatus status
     );
 
     @Query("SELECT ar FROM AccessRequest ar WHERE ar.documentId IN :documentIds " +
             "AND ar.status = :status ORDER BY ar.requestedAt DESC")
     List<AccessRequest> findByDocumentIdInAndStatus(
-            @Param("documentIds") List<UUID> documentIds,
+            @Param("documentIds") List<String> documentIds,
             @Param("status") RequestStatus status
     );
 
     boolean existsByDocumentIdAndRequesterIdAndStatus(
-            UUID documentId, UUID requesterId, RequestStatus status
+            String documentId, UUID requesterId, RequestStatus status
     );
 
-    long countByDocumentIdAndStatus(UUID documentId, RequestStatus status);
+    long countByDocumentIdAndStatus(String documentId, RequestStatus status);
 
     @Query("SELECT COUNT(ar) FROM AccessRequest ar WHERE ar.documentId IN " +
             "(SELECT dp.documentId FROM DocumentPermission dp WHERE dp.userId = :ownerId " +

@@ -14,16 +14,16 @@ import java.util.UUID;
 @Repository
 public interface DocumentPermissionRepository extends JpaRepository<DocumentPermission, UUID> {
 
-    Optional<DocumentPermission> findByDocumentIdAndUserId(UUID documentId, UUID userId);
+    Optional<DocumentPermission> findByDocumentIdAndUserId(String documentId, UUID userId);
 
-    List<DocumentPermission> findByDocumentId(UUID documentId);
+    List<DocumentPermission> findByDocumentId(String documentId);
 
     List<DocumentPermission> findByUserId(UUID userId);
 
     @Query("SELECT dp FROM DocumentPermission dp WHERE dp.documentId = :documentId " +
             "AND dp.userId = :userId AND dp.permissionLevel IN :levels")
     Optional<DocumentPermission> findByDocumentIdAndUserIdAndPermissionLevelIn(
-            @Param("documentId") UUID documentId,
+            @Param("documentId") String documentId,
             @Param("userId") UUID userId,
             @Param("levels") Set<PermissionLevel> levels
     );
@@ -32,25 +32,25 @@ public interface DocumentPermissionRepository extends JpaRepository<DocumentPerm
             "FROM DocumentPermission dp WHERE dp.documentId = :documentId " +
             "AND dp.userId = :userId AND dp.permissionLevel = :level")
     boolean existsByDocumentIdAndUserIdAndPermissionLevel(
-            @Param("documentId") UUID documentId,
+            @Param("documentId") String documentId,
             @Param("userId") UUID userId,
             @Param("level") PermissionLevel level
     );
 
-    boolean existsByDocumentIdAndUserId(UUID documentId, UUID userId);
+    boolean existsByDocumentIdAndUserId(String documentId, UUID userId);
 
-    void deleteByDocumentIdAndUserId(UUID documentId, UUID userId);
+    void deleteByDocumentIdAndUserId(String documentId, UUID userId);
 
-    void deleteByDocumentId(UUID documentId);
+    void deleteByDocumentId(String documentId);
 
-    long countByDocumentId(UUID documentId);
+    long countByDocumentId(String documentId);
 
     @Query("SELECT dp.userId FROM DocumentPermission dp WHERE dp.documentId = :documentId " +
             "AND dp.permissionLevel = :level")
     List<UUID> findUserIdsByDocumentIdAndPermissionLevel(
-            @Param("documentId") UUID documentId,
+            @Param("documentId") String documentId,
             @Param("level") PermissionLevel level
     );
 
-    boolean existsByDocumentId(UUID documentUuid);
+    boolean existsByDocumentId(String documentId);
 }

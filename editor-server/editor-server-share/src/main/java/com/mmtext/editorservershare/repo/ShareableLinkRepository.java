@@ -16,12 +16,12 @@ public interface ShareableLinkRepository extends JpaRepository<ShareableLink, UU
 
     Optional<ShareableLink> findByLinkToken(String linkToken);
 
-    List<ShareableLink> findByDocumentIdAndIsActiveTrue(UUID documentId);
+    List<ShareableLink> findByDocumentIdAndIsActiveTrue(String documentId);
 
     @Query("SELECT sl FROM ShareableLink sl WHERE sl.documentId = :documentId " +
             "AND sl.isActive = true AND (sl.expiresAt IS NULL OR sl.expiresAt > :now)")
     List<ShareableLink> findActiveByDocumentId(
-            @Param("documentId") UUID documentId,
+            @Param("documentId") String documentId,
             @Param("now") Instant now
     );
 
@@ -34,7 +34,7 @@ public interface ShareableLinkRepository extends JpaRepository<ShareableLink, UU
 
     @Query("SELECT COUNT(sl) FROM ShareableLink sl WHERE sl.documentId = :documentId " +
             "AND sl.isActive = true")
-    long countActiveByDocumentId(@Param("documentId") UUID documentId);
+    long countActiveByDocumentId(@Param("documentId") String documentId);
 
-    void deleteByDocumentId(UUID documentId);
+    void deleteByDocumentId(String documentId);
 }

@@ -58,7 +58,17 @@ public class AccessRequestService {
 
     @Transactional
     public AccessRequestResponse requestAccess(
-            UUID documentId,
+            String documentId,
+            RequestAccessDto request,
+            UUID currentUserId,
+            HttpServletRequest httpRequest) {
+        return requestAccess(documentId, null, request, currentUserId, httpRequest);
+    }
+
+    @Transactional
+    public AccessRequestResponse requestAccess(
+            String documentId,
+            String originalDocumentId,
             RequestAccessDto request,
             UUID currentUserId,
             HttpServletRequest httpRequest) {
@@ -68,7 +78,9 @@ public class AccessRequestService {
             throw new IllegalArgumentException("You already have access to this document");
         }
 
-        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(documentId.toString());
+        DocumentInfo documentInfo = editorServiceClient.getDocumentInfo(
+            originalDocumentId != null ? originalDocumentId : documentId.toString()
+        );
         if (!documentInfo.isAllowAccessRequests()) {
             throw new IllegalArgumentException("This document doesn't accept access requests");
         }
@@ -143,15 +155,32 @@ public class AccessRequestService {
         permissionRepository.save(permission);
         accessRequestRepository.save(request);
 
-        // Send approval email
-        var documentInfo = editorServiceClient.getDocumentInfo(request.getDocumentId().toString());
-        emailService.sendAccessApprovedEmail(
-                request.getRequesterEmail(),
-                request.getRequesterName(),
-                request.getDocumentId(),
-                documentInfo.getTitle(),
-                request.getRequestedPermission()
-        );
+        // Get document info
+        String originalDocId = request.getDocumentId();
+        if (originalDocId == null) {
+            // If original document ID is not stored, get it from document info
+            var documentInfo = editorServiceClient.getDocumentInfo(request.getDocumentId().toString());
+            originalDocId = documentInfo.getDocId();
+
+            // Send approval email
+            emailService.sendAccessApprovedEmail(
+                    request.getRequesterEmail(),
+                    request.getRequesterName(),
+                    originalDocId,
+                    documentInfo.getTitle(),
+                    request.getRequestedPermission()
+            );
+        } else {
+            // Original document ID is available, get title separately
+            var documentInfo = editorServiceClient.getDocumentInfo(originalDocId);
+            emailService.sendAccessApprovedEmail(
+                    request.getRequesterEmail(),
+                    request.getRequesterName(),
+                    originalDocId,
+                    documentInfo.getTitle(),
+                    request.getRequestedPermission()
+            );
+        }
 
         approvalTokens.remove(requestId.toString());
         log.info("Access request {} approved via email", requestId);
@@ -179,7 +208,7 @@ public class AccessRequestService {
         log.info("Access request {} rejected via email", requestId);
     }
 
-    public List<AccessRequestResponse> getPendingAccessRequests(UUID documentId, UUID currentUserId) {
+    public List<AccessRequestResponse> getPendingAccessRequests(String documentId, UUID currentUserId) {
         // Verify owner
         if (!permissionRepository.existsByDocumentIdAndUserIdAndPermissionLevel(
                 documentId, currentUserId, PermissionLevel.OWNER)) {

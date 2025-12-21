@@ -2,10 +2,10 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, of } from 'rxjs';
-import { 
-  LoginRequest, 
-  SignupRequest, 
-  AuthResponse, 
+import {
+  LoginRequest,
+  SignupRequest,
+  AuthResponse,
   RefreshResponse
 } from '../models/auth.model';
 import { User } from '../models/user.model';
@@ -250,13 +250,30 @@ export class AuthService {
         // After loading user, handle redirect if present
         const returnUrl = sessionStorage.getItem('returnUrl');
         if (returnUrl && this.isSafeRedirect(returnUrl)) {
-          this.router.navigateByUrl(returnUrl);
+          // Check if this is a share link access
+          this.handleShareLinkAccess(returnUrl);
           sessionStorage.removeItem('returnUrl');
         } else {
           this.router.navigate(['/home']);
         }
       }
     });
+  }
+
+  /**
+   * Handle share link access after login
+   */
+  private handleShareLinkAccess(returnUrl: string): void {
+    // Check if this is a share link
+    // Store the share link URL in sessionStorage for later processing
+    if (returnUrl.includes('/api/share/link/')) {
+      sessionStorage.setItem('pendingShareLink', returnUrl);
+      console.log('Auth: Stored pending share link:', returnUrl);
+    }
+
+    // Just proceed with normal redirect for now
+    // The app.component will handle the share link after authentication
+    this.router.navigateByUrl(returnUrl);
   }
 
   /**
@@ -273,7 +290,10 @@ export class AuthService {
   private isSafeRedirect(url: string): boolean {
     console.log('Auth: Checking if redirect URL is safe:', url);
     // Ensure URL starts with / and doesn't start with //
-    const isSafe = (url && url.startsWith('/') && !url.startsWith('//')) ? true : false;
+    if (!url) {
+      return false;
+    }
+    const isSafe = url.startsWith('/') && !url.startsWith('//');
     console.log('Auth: URL is safe:', isSafe);
     return isSafe;
   }

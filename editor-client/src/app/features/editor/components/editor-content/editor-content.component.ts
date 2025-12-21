@@ -39,6 +39,7 @@ interface DiffResult {
 export class EditorContentComponent implements AfterContentChecked {
   @Input() content = '';
   @Input() isConnected = false;
+  @Input() canEdit = signal(false);
   @Output() contentChange = new EventEmitter<{ type: 'insert' | 'delete'; char?: string; position: number }>();
 
   // Use viewChild with signal for modern Angular

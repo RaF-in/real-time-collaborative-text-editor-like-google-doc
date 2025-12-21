@@ -20,8 +20,8 @@ public class ShareableLink {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "document_id", nullable = false)
-    private UUID documentId;
+    @Column(name = "document_id", nullable = false, length = 255)
+    private String documentId;
 
     @Column(name = "link_token", unique = true, nullable = false, length = 64)
     private String linkToken;
@@ -76,11 +76,11 @@ public class ShareableLink {
         this.id = id;
     }
 
-    public UUID getDocumentId() {
+    public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(UUID documentId) {
+    public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
 
@@ -154,7 +154,7 @@ public class ShareableLink {
 
     public static class Builder {
         private UUID id;
-        private UUID documentId;
+        private String documentId;
         private String linkToken;
         private PermissionLevel permissionLevel;
         private UUID createdBy;
@@ -169,7 +169,7 @@ public class ShareableLink {
             return this;
         }
 
-        public Builder documentId(UUID documentId) {
+        public Builder documentId(String documentId) {
             this.documentId = documentId;
             return this;
         }

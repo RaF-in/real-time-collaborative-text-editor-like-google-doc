@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -28,16 +29,7 @@ public class SharingController {
         this.linkService = linkService;
     }
 
-    /**
-     * Convert string document ID to UUID using a consistent approach
-     * This ensures that the same string document ID always maps to the same UUID
-     */
-    private UUID convertToUuid(String documentId) {
-        // Use a consistent namespace UUID for deterministic conversion
-        UUID namespace = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return UUID.nameUUIDFromBytes((namespace + documentId).getBytes());
-    }
-
+    
     // ========================================
     // Document Sharing
     // ========================================
@@ -51,7 +43,7 @@ public class SharingController {
             HttpServletRequest httpRequest) {
 
         ShareMultipleResponse response = sharingService.shareWithMultiple(
-                convertToUuid(documentId), documentId, request, currentUserId, httpRequest
+                documentId, request, currentUserId, httpRequest
         );
         return ResponseEntity.ok(response);
     }
@@ -62,7 +54,7 @@ public class SharingController {
             @PathVariable String documentId,
             @CurrentUser UUID currentUserId) {
 
-        return ResponseEntity.ok(sharingService.getDocumentPermissions(convertToUuid(documentId), currentUserId));
+        return ResponseEntity.ok(sharingService.getDocumentPermissions(documentId, currentUserId));
     }
 
     @PutMapping("/documents/{documentId}/permissions")
@@ -73,7 +65,7 @@ public class SharingController {
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
-        return ResponseEntity.ok(sharingService.updatePermission(convertToUuid(documentId), request, currentUserId, httpRequest));
+        return ResponseEntity.ok(sharingService.updatePermission(documentId, request, currentUserId, httpRequest));
     }
 
     @DeleteMapping("/documents/{documentId}/permissions/{userId}")
@@ -84,7 +76,7 @@ public class SharingController {
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
-        sharingService.removePermission(convertToUuid(documentId), userId, currentUserId, httpRequest);
+        sharingService.removePermission(documentId, userId, currentUserId, httpRequest);
         return ResponseEntity.noContent().build();
     }
 
@@ -95,7 +87,7 @@ public class SharingController {
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
-        return ResponseEntity.ok(sharingService.getDocumentAccessInfo(convertToUuid(documentId), documentId, currentUserId, httpRequest));
+        return ResponseEntity.ok(sharingService.getDocumentAccessInfo(documentId, currentUserId, httpRequest));
     }
 
     // ========================================
@@ -110,7 +102,7 @@ public class SharingController {
             @CurrentUser UUID currentUserId,
             HttpServletRequest httpRequest) {
 
-        return ResponseEntity.ok(accessRequestService.requestAccess(convertToUuid(documentId), request, currentUserId, httpRequest));
+        return ResponseEntity.ok(accessRequestService.requestAccess(documentId, request, currentUserId, httpRequest));
     }
 
     @GetMapping("/documents/{documentId}/access-requests")
@@ -119,7 +111,7 @@ public class SharingController {
             @PathVariable String documentId,
             @CurrentUser UUID currentUserId) {
 
-        return ResponseEntity.ok(accessRequestService.getPendingAccessRequests(convertToUuid(documentId), currentUserId));
+        return ResponseEntity.ok(accessRequestService.getPendingAccessRequests(documentId, currentUserId));
     }
 
     // Email link handlers - No authentication required
@@ -154,7 +146,7 @@ public class SharingController {
             HttpServletRequest httpRequest) {
 
         String baseUrl = getBaseUrl(httpRequest);
-        return ResponseEntity.ok(linkService.createShareableLink(convertToUuid(documentId), request, currentUserId, baseUrl));
+        return ResponseEntity.ok(linkService.createShareableLink(documentId, request, currentUserId, baseUrl));
     }
 
     @GetMapping("/documents/{documentId}/links")
@@ -165,7 +157,7 @@ public class SharingController {
             HttpServletRequest httpRequest) {
 
         String baseUrl = getBaseUrl(httpRequest);
-        return ResponseEntity.ok(linkService.getActiveShareableLinks(convertToUuid(documentId), currentUserId, baseUrl));
+        return ResponseEntity.ok(linkService.getActiveShareableLinks(documentId, currentUserId, baseUrl));
     }
 
     @DeleteMapping("/links/{linkId}")
@@ -184,8 +176,27 @@ public class SharingController {
             @PathVariable String token,
             @CurrentUser(required = false) UUID currentUserId) {
 
-        UUID documentId = linkService.accessViaShareableLinkAndGetDocumentId(token, currentUserId);
+        String documentId = linkService.accessViaShareableLinkAndGetDocumentId(token, currentUserId);
         return new RedirectView("/editor/" + documentId);
+    }
+
+    /**
+     * Access document via share link and grant permission
+     * This endpoint is called after user logs in to grant actual access
+     */
+    @PostMapping("/access")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<DocumentAccessInfoResponse> accessViaShareLink(
+            @RequestBody Map<String, String> request,
+            @CurrentUser UUID currentUserId) {
+
+        String token = request.get("token");
+        if (token == null || token.trim().isEmpty()) {
+            throw new IllegalArgumentException("Token is required");
+        }
+
+        DocumentAccessInfoResponse response = linkService.accessViaShareableLink(token, currentUserId);
+        return ResponseEntity.ok(response);
     }
 
     private String getBaseUrl(HttpServletRequest request) {

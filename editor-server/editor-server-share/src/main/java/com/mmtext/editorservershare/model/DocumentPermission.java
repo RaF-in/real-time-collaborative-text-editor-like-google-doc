@@ -22,8 +22,8 @@ public class DocumentPermission {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "document_id", nullable = false)
-    private UUID documentId;
+    @Column(name = "document_id", nullable = false, length = 255)
+    private String documentId;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
@@ -61,11 +61,11 @@ public class DocumentPermission {
         this.id = id;
     }
 
-    public UUID getDocumentId() {
+    public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(UUID documentId) {
+    public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
 
@@ -139,7 +139,7 @@ public class DocumentPermission {
     }
 
     public static class Builder {
-        private UUID documentId;
+        private String documentId;
         private UUID userId;
         private String userEmail;
         private String userName;
@@ -147,7 +147,7 @@ public class DocumentPermission {
         private PermissionLevel permissionLevel;
         private UUID grantedBy;
 
-        public Builder documentId(UUID documentId) {
+        public Builder documentId(String documentId) {
             this.documentId = documentId;
             return this;
         }

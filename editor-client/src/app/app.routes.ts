@@ -66,10 +66,11 @@ export const routes: Routes = [
   },
   {
     path: 'link/:token',
-    loadComponent: () => import('./features/sharing/components/share-link-access/shared-link-access.component')
-      .then(m => m.SharedLinkAccessComponent)
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/sharing/components/share-link-redirect/share-link-redirect.component')
+      .then(m => m.ShareLinkRedirectComponent)
   },
-  {
+    {
     path: 'no-access',
     loadComponent: () => import('./features/sharing/components/no-access/no-access.component')
       .then(m => m.NoAccessComponent)

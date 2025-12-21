@@ -67,14 +67,13 @@ public class ShareServiceGrpcImpl extends ShareServiceGrpc.ShareServiceImplBase 
             validateCreatePermissionsRequest(request);
 
             // Convert document ID to UUID
-            UUID documentUuid = convertDocumentIdToUuid(documentId);
             UUID ownerUuid = resolveUserUuid(ownerId);
 
             // Check if permissions already exist (idempotent operation)
-            if (permissionRepository.existsByDocumentIdAndUserId(documentUuid, ownerUuid)) {
+            if (permissionRepository.existsByDocumentIdAndUserId(documentId, ownerUuid)) {
                 log.info("Permissions already exist for document: {}, owner: {}", documentId, ownerId);
                 DocumentPermission existingPermission = permissionRepository
-                        .findByDocumentIdAndUserId(documentUuid, ownerUuid)
+                        .findByDocumentIdAndUserId(documentId, ownerUuid)
                         .orElseThrow(() -> new RuntimeException("Permission exists but cannot be retrieved"));
 
                 ShareServiceProto.CreateDocumentPermissionsResponse response =
@@ -96,7 +95,7 @@ public class ShareServiceGrpcImpl extends ShareServiceGrpc.ShareServiceImplBase 
 
             // Create new owner permission
             DocumentPermission ownerPermission = new DocumentPermission();
-            ownerPermission.setDocumentId(documentUuid);
+            ownerPermission.setDocumentId(documentId);
             ownerPermission.setUserId(ownerUuid);
             ownerPermission.setPermissionLevel(com.mmtext.editorservershare.enums.PermissionLevel.OWNER);
             ownerPermission.setGrantedBy(ownerUuid); // Owner grants permission to themselves
@@ -110,7 +109,7 @@ public class ShareServiceGrpcImpl extends ShareServiceGrpc.ShareServiceImplBase 
             /*
             if (auditService != null) {
                 auditService.logPermissionCreated(
-                        documentUuid,
+                        documentId,
                         ownerUuid,
                         com.mmtext.editorservershare.enums.PermissionLevel.OWNER,
                         "Initial owner permission created during document creation"
@@ -164,18 +163,17 @@ public class ShareServiceGrpcImpl extends ShareServiceGrpc.ShareServiceImplBase 
                 throw new IllegalArgumentException("Document ID cannot be null or empty");
             }
 
-            UUID documentUuid = convertDocumentIdToUuid(documentId);
 
             // Check if any permissions exist for this document
-            boolean exists = permissionRepository.existsByDocumentId(documentUuid);
+            boolean exists = permissionRepository.existsByDocumentId(documentId);
             long permissionCount = 0;
             ShareServiceProto.PermissionLevel highestPermission = ShareServiceProto.PermissionLevel.UNKNOWN;
 
             if (exists) {
-                permissionCount = permissionRepository.countByDocumentId(documentUuid);
+                permissionCount = permissionRepository.countByDocumentId(documentId);
 
                 // Find the highest permission level
-                List<DocumentPermission> permissions = permissionRepository.findByDocumentId(documentUuid);
+                List<DocumentPermission> permissions = permissionRepository.findByDocumentId(documentId);
                 for (DocumentPermission permission : permissions) {
                     ShareServiceProto.PermissionLevel currentPermission = convertPermissionLevel(permission.getPermissionLevel());
                     if (currentPermission.getNumber() > highestPermission.getNumber()) {
@@ -221,11 +219,11 @@ public class ShareServiceGrpcImpl extends ShareServiceGrpc.ShareServiceImplBase 
                 throw new IllegalArgumentException("User ID cannot be null or empty");
             }
 
-            UUID documentUuid = convertDocumentIdToUuid(documentId);
+
             UUID userUuid = resolveUserUuid(userId);
 
             Optional<DocumentPermission> permissionOpt = permissionRepository
-                    .findByDocumentIdAndUserId(documentUuid, userUuid);
+                    .findByDocumentIdAndUserId(documentId, userUuid);
 
             ShareServiceProto.GetUserPermissionsResponse.Builder responseBuilder =
                 ShareServiceProto.GetUserPermissionsResponse.newBuilder()

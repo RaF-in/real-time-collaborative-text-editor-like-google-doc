@@ -22,7 +22,7 @@ public class AuditService {
 
     @Async
     public void logShare(
-            UUID documentId,
+            String documentId,
             UUID userId,
             UUID targetUserId,
             PermissionLevel permissionLevel,
@@ -35,7 +35,7 @@ public class AuditService {
 
     @Async
     public void logPermissionChange(
-            UUID documentId,
+            String documentId,
             UUID userId,
             UUID targetUserId,
             PermissionLevel oldPermission,
@@ -49,7 +49,7 @@ public class AuditService {
 
     @Async
     public void logPermissionRemove(
-            UUID documentId,
+            String documentId,
             UUID userId,
             UUID targetUserId,
             PermissionLevel oldPermission,
@@ -62,7 +62,7 @@ public class AuditService {
 
     @Async
     public void logPermissionCreated(
-            UUID documentId,
+            String documentId,
             UUID userId,
             PermissionLevel permissionLevel,
             String details) {
@@ -70,14 +70,14 @@ public class AuditService {
         metadata.put("details", details);
 
         ShareAuditLog log = new ShareAuditLog(documentId, userId, ShareAuditLog.ACTION_PERMISSION_CHANGE, userId, null,
-                permissionLevel, "system", "ShareService-gRPC", metadata, Instant.now());
+                permissionLevel, null, "ShareService-gRPC", metadata, Instant.now());
 
         auditLogRepository.save(log);
     }
 
     @Async
     public void logAccessRequest(
-            UUID documentId,
+            String documentId,
             UUID userId,
             PermissionLevel requestedPermission,
             HttpServletRequest request) {
@@ -92,7 +92,7 @@ public class AuditService {
 
     @Async
     public void logAccessApprove(
-            UUID documentId,
+            String documentId,
             UUID userId,
             UUID targetUserId,
             PermissionLevel grantedPermission,
@@ -105,7 +105,7 @@ public class AuditService {
 
     @Async
     public void logAccessReject(
-            UUID documentId,
+            String documentId,
             UUID userId,
             UUID targetUserId,
             HttpServletRequest request) {
@@ -116,6 +116,10 @@ public class AuditService {
     }
 
     private String getClientIp(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("X-Real-IP");
@@ -123,6 +127,40 @@ public class AuditService {
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
-        return ip != null && ip.contains(",") ? ip.split(",")[0].trim() : ip;
+
+        if (ip == null || ip.isEmpty()) {
+            return null;
+        }
+
+        // Handle multiple IPs in X-Forwarded-For header
+        if (ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+
+        // Validate IP format - return null if not a valid IP
+        if (isValidIpAddress(ip)) {
+            return ip;
+        }
+
+        return null;
+    }
+
+    private boolean isValidIpAddress(String ip) {
+        if (ip == null || ip.isEmpty()) {
+            return false;
+        }
+
+        // IPv4 regex
+        if (ip.matches("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")) {
+            return true;
+        }
+
+        // IPv6 regex (simplified)
+        if (ip.matches("^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$") ||
+            ip.contains(":")) {
+            return true;
+        }
+
+        return false;
     }
 }

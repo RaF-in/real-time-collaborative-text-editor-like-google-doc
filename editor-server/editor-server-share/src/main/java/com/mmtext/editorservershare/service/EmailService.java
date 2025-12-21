@@ -36,7 +36,7 @@ public class EmailService {
     public void sendDocumentSharedEmail(
             String toEmail,
             String toName,
-            UUID documentId,
+            String documentId,
             String documentTitle,
             PermissionLevel permissionLevel,
             String sharerName,
@@ -59,7 +59,7 @@ public class EmailService {
     public void sendAccessRequestEmail(
             String ownerEmail,
             String ownerName,
-            UUID documentId,
+            String documentId,
             String documentTitle,
             String requesterName,
             String requesterEmail,
@@ -89,7 +89,7 @@ public class EmailService {
     public void sendAccessApprovedEmail(
             String toEmail,
             String toName,
-            UUID documentId,
+            String documentId,
             String documentTitle,
             PermissionLevel grantedPermission) {
 

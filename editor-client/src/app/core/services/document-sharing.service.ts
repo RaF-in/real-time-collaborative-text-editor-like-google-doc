@@ -178,8 +178,9 @@ export class DocumentSharingService {
   }
   
   accessViaShareableLink(token: string): Observable<DocumentAccessInfo> {
-    return this.http.get<DocumentAccessInfo>(
-      `${this.baseUrl}/links/${token}/access`
+    return this.http.post<DocumentAccessInfo>(
+      `${this.baseUrl}/access`,
+      { token }
     );
   }
   

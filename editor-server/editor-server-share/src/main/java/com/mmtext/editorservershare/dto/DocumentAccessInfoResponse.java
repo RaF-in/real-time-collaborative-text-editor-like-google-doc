@@ -6,7 +6,7 @@ import java.util.UUID;
 
 
 public class DocumentAccessInfoResponse {
-    private UUID documentId;
+    private String documentId;
     private String title;
     private PermissionLevel userPermission;
     private Boolean canEdit;
@@ -17,11 +17,11 @@ public class DocumentAccessInfoResponse {
     private String ownerEmail;
     private String ownerName;
 
-    public UUID getDocumentId() {
+    public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(UUID documentId) {
+    public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
 
@@ -102,7 +102,7 @@ public class DocumentAccessInfoResponse {
     }
 
     public static class Builder {
-        private UUID documentId;
+        private String documentId;
         private String title;
         private PermissionLevel userPermission;
         private Boolean canEdit;
@@ -113,7 +113,7 @@ public class DocumentAccessInfoResponse {
         private String ownerEmail;
         private String ownerName;
 
-        public Builder documentId(UUID documentId) {
+        public Builder documentId(String documentId) {
             this.documentId = documentId;
             return this;
         }

@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class AccessRequestResponse {
     private UUID id;
-    private UUID documentId;
+    private String documentId;
     private String documentTitle;
     private UUID requesterId;
     private String requesterEmail;
@@ -30,11 +30,11 @@ public class AccessRequestResponse {
         this.id = id;
     }
 
-    public UUID getDocumentId() {
+    public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(UUID documentId) {
+    public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
 
@@ -133,7 +133,7 @@ public class AccessRequestResponse {
 
     public static class Builder {
         private UUID id;
-        private UUID documentId;
+        private String documentId;
         private String documentTitle;
         private UUID requesterId;
         private String requesterEmail;
@@ -151,7 +151,7 @@ public class AccessRequestResponse {
             return this;
         }
 
-        public Builder documentId(UUID documentId) {
+        public Builder documentId(String documentId) {
             this.documentId = documentId;
             return this;
         }

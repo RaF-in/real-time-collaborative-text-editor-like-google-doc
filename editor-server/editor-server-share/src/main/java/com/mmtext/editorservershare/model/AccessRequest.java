@@ -21,8 +21,8 @@ public class AccessRequest {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "document_id", nullable = false)
-    private UUID documentId;
+    @Column(name = "document_id", nullable = false, length = 255)
+    private String documentId;
 
     @Column(name = "requester_id", nullable = false)
     private UUID requesterId;
@@ -52,7 +52,7 @@ public class AccessRequest {
     private Instant resolvedAt;
 
     @Column(name = "resolved_by")
-    private UUID resolvedBy;
+    private String resolvedBy;
 
     // Transient fields
     @Transient
@@ -68,13 +68,13 @@ public class AccessRequest {
     private String documentOwnerName;
 
 
-    public void approve(UUID resolvedBy) {
+    public void approve(String resolvedBy) {
         this.status = RequestStatus.APPROVED;
         this.resolvedAt = Instant.now();
         this.resolvedBy = resolvedBy;
     }
 
-    public void reject(UUID resolvedBy) {
+    public void reject(String resolvedBy) {
         this.status = RequestStatus.REJECTED;
         this.resolvedAt = Instant.now();
         this.resolvedBy = resolvedBy;
@@ -88,11 +88,11 @@ public class AccessRequest {
         this.id = id;
     }
 
-    public UUID getDocumentId() {
+    public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(UUID documentId) {
+    public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
 
@@ -160,11 +160,11 @@ public class AccessRequest {
         this.resolvedAt = resolvedAt;
     }
 
-    public UUID getResolvedBy() {
+    public String getResolvedBy() {
         return resolvedBy;
     }
 
-    public void setResolvedBy(UUID resolvedBy) {
+    public void setResolvedBy(String resolvedBy) {
         this.resolvedBy = resolvedBy;
     }
 
@@ -206,7 +206,7 @@ public class AccessRequest {
     }
 
     public static class Builder {
-        private UUID documentId;
+        private String documentId;
         private UUID requesterId;
         private String requesterEmail;
         private String requesterName;
@@ -214,7 +214,7 @@ public class AccessRequest {
         private String message;
         private RequestStatus status = RequestStatus.PENDING;
 
-        public Builder documentId(UUID documentId) {
+        public Builder documentId(String documentId) {
             this.documentId = documentId;
             return this;
         }
