@@ -41,4 +41,6 @@ public interface AccessRequestRepository extends JpaRepository<AccessRequest, UU
             @Param("ownerId") UUID ownerId,
             @Param("status") RequestStatus status
     );
+
+    List<AccessRequest> findByStatusAndApprovalTokenIsNull(RequestStatus status);
 }

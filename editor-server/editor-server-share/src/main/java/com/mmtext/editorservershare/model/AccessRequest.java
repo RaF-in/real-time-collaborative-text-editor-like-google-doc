@@ -54,6 +54,12 @@ public class AccessRequest {
     @Column(name = "resolved_by")
     private String resolvedBy;
 
+    @Column(name = "approval_token")
+    private String approvalToken;
+
+    @Column(name = "token_expires_at")
+    private Instant tokenExpiresAt;
+
     // Transient fields
     @Transient
     private String documentTitle;
@@ -198,6 +204,22 @@ public class AccessRequest {
 
     public void setDocumentOwnerName(String documentOwnerName) {
         this.documentOwnerName = documentOwnerName;
+    }
+
+    public String getApprovalToken() {
+        return approvalToken;
+    }
+
+    public void setApprovalToken(String approvalToken) {
+        this.approvalToken = approvalToken;
+    }
+
+    public Instant getTokenExpiresAt() {
+        return tokenExpiresAt;
+    }
+
+    public void setTokenExpiresAt(Instant tokenExpiresAt) {
+        this.tokenExpiresAt = tokenExpiresAt;
     }
 
     // Builder pattern implementation

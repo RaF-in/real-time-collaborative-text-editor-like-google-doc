@@ -57,6 +57,22 @@ export interface AccessRequest {
   resolvedBy?: string;
 }
 
+export interface AccessRequestResponse {
+  id: string;
+  documentId: string;
+  documentTitle?: string;
+  requesterId: string;
+  requesterEmail: string;
+  requesterName: string;
+  requesterAvatarUrl?: string;
+  requestedPermission: PermissionLevel;
+  message?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  requestedAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
 export interface RequestAccessRequest {
   requestedPermission: PermissionLevel;
   message?: string;

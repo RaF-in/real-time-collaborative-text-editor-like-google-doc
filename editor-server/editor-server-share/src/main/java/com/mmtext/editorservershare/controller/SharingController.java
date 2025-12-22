@@ -116,21 +116,245 @@ public class SharingController {
 
     // Email link handlers - No authentication required
     @GetMapping("/access-requests/{requestId}/approve")
-    public RedirectView approveAccessRequest(
-            @PathVariable UUID requestId,
-            @RequestParam String token) {
+    public ResponseEntity<String> approveAccessRequest(
+            @PathVariable String requestId,
+            @RequestParam(required = false) String token) {
 
-        accessRequestService.approveViaEmail(requestId, token);
-        return new RedirectView("/documents?access=approved");
+        System.out.println("=== APPROVE ACCESS REQUEST ===");
+        System.out.println("RequestId (String): " + requestId);
+        System.out.println("Token: " + token);
+
+        if (token == null || token.trim().isEmpty()) {
+            System.err.println("Token is null or empty");
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Error</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .error { color: #f44336; font-size: 48px; margin-bottom: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error">✗</div>
+                        <h1>Invalid Link</h1>
+                        <p>The approval link is invalid or missing the token.</p>
+                        <p>Please contact the requester to send a new request.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+            return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        }
+
+        UUID requestUuid;
+        try {
+            requestUuid = UUID.fromString(requestId);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid UUID format: " + requestId);
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Error</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .error { color: #f44336; font-size: 48px; margin-bottom: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error">✗</div>
+                        <h1>Invalid Request</h1>
+                        <p>The request ID is not valid.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+            return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        }
+
+        try {
+            accessRequestService.approveViaEmail(requestUuid, token);
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Access Approved</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .success { color: #4caf50; font-size: 48px; margin-bottom: 20px; }
+                        h1 { color: #333; }
+                        p { color: #666; }
+                        .close-hint { font-size: 14px; color: #999; margin-top: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="success">✓</div>
+                        <h1>Access Approved</h1>
+                        <p>The access request has been approved successfully.</p>
+                        <p>The user will receive an email notification.</p>
+                        <p class="close-hint">You can now close this window.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+            return ResponseEntity.ok().contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        } catch (Exception e) {
+            System.err.println("Error approving access request: " + e.getMessage());
+            e.printStackTrace();
+            String html = String.format("""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Error</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .error { color: #f44336; font-size: 48px; margin-bottom: 20px; }
+                        h1 { color: #333; }
+                        p { color: #666; }
+                        .close-hint { font-size: 14px; color: #999; margin-top: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error">✗</div>
+                        <h1>Approval Failed</h1>
+                        <p>Unable to approve the access request.</p>
+                        <p>Error: %s</p>
+                        <p class="close-hint">You can now close this window.</p>
+                    </div>
+                </body>
+                </html>
+                """, e.getMessage());
+            return ResponseEntity.status(500).contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        }
     }
 
     @GetMapping("/access-requests/{requestId}/reject")
-    public RedirectView rejectAccessRequest(
-            @PathVariable UUID requestId,
-            @RequestParam String token) {
+    public ResponseEntity<String> rejectAccessRequest(
+            @PathVariable String requestId,
+            @RequestParam(required = false) String token) {
 
-        accessRequestService.rejectViaEmail(requestId, token);
-        return new RedirectView("/documents?access=rejected");
+        System.out.println("=== REJECT ACCESS REQUEST ===");
+        System.out.println("RequestId: " + requestId);
+        System.out.println("Token: " + token);
+
+        if (token == null || token.trim().isEmpty()) {
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Error</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .error { color: #f44336; font-size: 48px; margin-bottom: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error">✗</div>
+                        <h1>Invalid Link</h1>
+                        <p>The rejection link is invalid or missing the token.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+            return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        }
+
+        UUID requestUuid;
+        try {
+            requestUuid = UUID.fromString(requestId);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid UUID format: " + requestId);
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Error</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .error { color: #f44336; font-size: 48px; margin-bottom: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error">✗</div>
+                        <h1>Invalid Request</h1>
+                        <p>The request ID is not valid.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+            return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        }
+
+        try {
+            accessRequestService.rejectViaEmail(requestUuid, token);
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Access Rejected</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .rejected { color: #f44336; font-size: 48px; margin-bottom: 20px; }
+                        h1 { color: #333; }
+                        p { color: #666; }
+                        .close-hint { font-size: 14px; color: #999; margin-top: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="rejected">✗</div>
+                        <h1>Access Rejected</h1>
+                        <p>The access request has been rejected.</p>
+                        <p>The user will be notified.</p>
+                        <p class="close-hint">You can now close this window.</p>
+                    </div>
+                </body>
+                </html>
+                """;
+            return ResponseEntity.ok().contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        } catch (Exception e) {
+            String html = String.format("""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Error</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                        .container { background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+                        .error { color: #f44336; font-size: 48px; margin-bottom: 20px; }
+                        h1 { color: #333; }
+                        p { color: #666; }
+                        .close-hint { font-size: 14px; color: #999; margin-top: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error">✗</div>
+                        <h1>Rejection Failed</h1>
+                        <p>Unable to reject the access request.</p>
+                        <p>Error: %s</p>
+                        <p class="close-hint">You can now close this window.</p>
+                    </div>
+                </body>
+                </html>
+                """, e.getMessage());
+            return ResponseEntity.badRequest().contentType(org.springframework.http.MediaType.TEXT_HTML).body(html);
+        }
     }
 
     // ========================================
@@ -197,6 +421,12 @@ public class SharingController {
 
         DocumentAccessInfoResponse response = linkService.accessViaShareableLink(token, currentUserId);
         return ResponseEntity.ok(response);
+    }
+
+    // Test endpoint
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Share server is working!");
     }
 
     private String getBaseUrl(HttpServletRequest request) {

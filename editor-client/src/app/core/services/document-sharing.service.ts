@@ -13,7 +13,8 @@ import {
   ShareableLink,
   CreateShareableLinkRequest,
   NotificationData,
-  PermissionLevel
+  PermissionLevel,
+  AccessRequestResponse
 } from '../models/sharing.model';
 
 @Injectable({
@@ -98,8 +99,8 @@ export class DocumentSharingService {
   requestAccess(
     documentId: string,
     request: RequestAccessRequest
-  ): Observable<AccessRequest> {
-    return this.http.post<AccessRequest>(
+  ): Observable<AccessRequestResponse> {
+    return this.http.post<AccessRequestResponse>(
       `${this.baseUrl}/documents/${documentId}/request-access`,
       request
     );

@@ -25,6 +25,9 @@ public class EmailService {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    @Value("${app.backend-url:http://localhost:8080}")
+    private String backendUrl;
+
     @Value("${app.name:Editor App}")
     private String appName;
 
@@ -68,14 +71,9 @@ public class EmailService {
             UUID requestId,
             String approvalToken) {
 
-        String approveUrl = frontendUrl + "/api/share/access-requests/" + requestId +
-                "/approve?token=" + approvalToken;
-        String rejectUrl = frontendUrl + "/api/share/access-requests/" + requestId +
-                "/reject?token=" + approvalToken;
-
         String htmlContent = buildAccessRequestEmail(
                 ownerName, documentTitle, requesterName, requesterEmail,
-                requestedPermission, message, approveUrl, rejectUrl
+                requestedPermission, message, requestId.toString(), approvalToken, approvalToken
         );
 
         sendEmail(ownerEmail,
@@ -190,7 +188,10 @@ public class EmailService {
 
     private String buildAccessRequestEmail(String ownerName, String documentTitle,
                                            String requesterName, String requesterEmail, PermissionLevel requestedPermission,
-                                           String message, String approveUrl, String rejectUrl) {
+                                           String message, String requestId, String approveToken, String rejectToken) {
+
+        String approveUrl = backendUrl + "/api/share/access-requests/" + requestId + "/approve?token=" + approveToken;
+        String rejectUrl = backendUrl + "/api/share/access-requests/" + requestId + "/reject?token=" + rejectToken;
 
         return String.format("""
             <!DOCTYPE html>

@@ -57,9 +57,8 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/info",
                                 // Public sharing endpoints
-                                "/api/share/access-requests/*/approve",
-                                "/api/share/access-requests/*/reject",
-                                "/api/share/link/*"
+                                "/api/share/link/**",
+                                "/api/share/access-requests/**"
                         ).permitAll()
 
                         // Admin endpoints

@@ -37,7 +37,6 @@ public class AccessRequestService {
     private final EmailService emailService;
     private final AuditService auditService;
 
-    private final Map<String, String> approvalTokens = new HashMap<>();
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Autowired
@@ -105,9 +104,16 @@ public class AccessRequestService {
 
         accessRequest = accessRequestRepository.save(accessRequest);
 
-        // Generate approval token
+        // Generate approval token and set expiry (24 hours)
         String token = generateToken();
-        approvalTokens.put(accessRequest.getId().toString(), token);
+        Instant tokenExpiresAt = Instant.now().plusSeconds(24 * 60 * 60);
+        log.info("Generated token {} for request ID {} with expiry {}", token, accessRequest.getId(), tokenExpiresAt);
+
+        // Save token to database
+        accessRequest.setApprovalToken(token);
+        accessRequest.setTokenExpiresAt(tokenExpiresAt);
+        accessRequest = accessRequestRepository.save(accessRequest);
+        log.info("Saved token to database for request ID {}", accessRequest.getId());
 
         // Send email to owner
         var ownerInfo = authServiceClient.getUserById(documentInfo.getOwnerId())
@@ -133,6 +139,7 @@ public class AccessRequestService {
 
     @Transactional
     public void approveViaEmail(UUID requestId, String token) {
+        log.info("Approving access request {} with token {}", requestId, token);
         validateToken(requestId, token);
 
         AccessRequest request = accessRequestRepository.findById(requestId)
@@ -152,8 +159,13 @@ public class AccessRequestService {
                 .grantedBy(null) // Via email
                 .build();
 
-        permissionRepository.save(permission);
-        accessRequestRepository.save(request);
+        log.info("Creating permission for document {} and user {}",
+                request.getDocumentId(), request.getRequesterId());
+        permission = permissionRepository.save(permission);
+        log.info("Permission created with ID {}", permission.getId());
+
+        request = accessRequestRepository.save(request);
+        log.info("Access request {} marked as approved", requestId);
 
         // Get document info
         String originalDocId = request.getDocumentId();
@@ -182,7 +194,9 @@ public class AccessRequestService {
             );
         }
 
-        approvalTokens.remove(requestId.toString());
+        // Clear the token after use
+        request.setApprovalToken(null);
+        accessRequestRepository.save(request);
         log.info("Access request {} approved via email", requestId);
     }
 
@@ -204,7 +218,9 @@ public class AccessRequestService {
                 documentInfo.getTitle()
         );
 
-        approvalTokens.remove(requestId.toString());
+        // Clear the token after use
+        request.setApprovalToken(null);
+        accessRequestRepository.save(request);
         log.info("Access request {} rejected via email", requestId);
     }
 
@@ -223,10 +239,30 @@ public class AccessRequestService {
     }
 
     private void validateToken(UUID requestId, String token) {
-        String storedToken = approvalTokens.get(requestId);
-        if (storedToken == null || !storedToken.equals(token)) {
+        log.info("Validating token for request ID: {}", requestId);
+
+        AccessRequest request = accessRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found: " + requestId));
+
+        String storedToken = request.getApprovalToken();
+        Instant expiresAt = request.getTokenExpiresAt();
+
+        if (storedToken == null) {
+            log.error("No token found for request ID: {}", requestId);
             throw new IllegalArgumentException("Invalid or expired token");
         }
+
+        if (expiresAt != null && expiresAt.isBefore(Instant.now())) {
+            log.error("Token expired for request ID: {}. Expired at: {}", requestId, expiresAt);
+            throw new IllegalArgumentException("Token has expired");
+        }
+
+        if (!storedToken.equals(token)) {
+            log.error("Token mismatch for request ID: {}. Expected: {}, Got: {}", requestId, storedToken, token);
+            throw new IllegalArgumentException("Invalid or expired token");
+        }
+
+        log.info("Token validated successfully for request ID: {}", requestId);
     }
 
     private String generateToken() {

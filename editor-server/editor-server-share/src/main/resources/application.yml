@@ -135,5 +135,6 @@ cors:
 
 # Application-specific configuration
 app:
-  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+  backend-url: ${BACKEND_URL:http://localhost:8080}
   name: ${APP_NAME:Editor App}
